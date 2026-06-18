@@ -1,0 +1,9 @@
+{
+  "project_id": "fa4e0000-1234-5678-90ab-cd1234567890",
+  "project_name": "oss-project",
+  "org_id": "fa4e0001-1234-5678-90ab-cd1234567890",
+  "appkey": "ossfkey",
+  "region": "us-test",
+  "api_key": "ik_449c6ad841607ca640cc6c61acc8d2ce1549bc578c2d38796a77734abeec08e6",
+  "oss_host": "https://insforge.alienwatermcbo.com"
+}

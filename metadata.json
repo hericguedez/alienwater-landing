@@ -1,0 +1,6 @@
+{
+  "name": "Alienwater Venezuela",
+  "description": "Líderes en tecnología de dispensado automatizado de agua purificada en Venezuela. Soluciones de alta rentabilidad 24/7.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

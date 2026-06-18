@@ -1,0 +1,1199 @@
+{
+  "name": "Agente_Alen_Water",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alen_water_recarga",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook (yCloud)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        200
+      ],
+      "webhookId": "f7a5b3d9-9e8c-4a3d-8c2b-6d1a9e8f7a6b"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "phone",
+              "type": "string",
+              "value": "={{ $json.body.whatsappInboundMessage.from }}"
+            },
+            {
+              "id": "a2",
+              "name": "name",
+              "type": "string",
+              "value": "={{ $json.body.whatsappInboundMessage.customerProfile.name || 'Cliente' }}"
+            },
+            {
+              "id": "a3",
+              "name": "msg_body",
+              "type": "string",
+              "value": "={{ ($json.body.whatsappInboundMessage.text?.body || $json.body.whatsappInboundMessage.interactive?.button_reply?.title || $json.body.whatsappInboundMessage.interactive?.button_reply?.id || '').trim() }}"
+            },
+            {
+              "id": "a4",
+              "name": "bot_phone",
+              "type": "string",
+              "value": "={{ $json.body.whatsappInboundMessage.to }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-context",
+      "name": "Contexto Mensaje",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        250,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT \n  u.phone,\n  u.first_name,\n  u.last_name,\n  u.sucursal AS user_sucursal,\n  c.qr_code,\n  c.saldo,\n  c.sucursal AS cred_sucursal\nFROM public.users u\nLEFT JOIN public.creditos c ON u.phone = c.phone\nWHERE u.phone = '{{ $json.phone }}';"
+      },
+      "id": "query-user",
+      "name": "Consultar Usuario",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        450,
+        200
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CsD6I7qpB4gzoBzS",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const user = $input.all()[0]?.json;\nconst context = $('Contexto Mensaje').first().json;\nconst msg = (context.msg_body || \"\").trim().toLowerCase();\n\nconst user_exists = !!user?.qr_code;\n\nlet intent = \"menu\";\nlet sucursal = null;\n\nconst sucursalMatch = msg.match(/recargar?\\s+cod(\\d+)/i);\nif (sucursalMatch) {\n  intent = \"recarga\";\n  sucursal = sucursalMatch[1];\n} else if (msg === \"recarga\" || msg === \"recargar\") {\n  // Si el usuario ya está registrado y tiene sucursal guardada, no pedirle el código de máquina\n  const has_saved_sucursal = !!(user?.cred_sucursal || user?.user_sucursal);\n  if (user_exists || has_saved_sucursal) {\n    intent = \"recarga\";\n  } else {\n    intent = \"recarga_invalida\";\n  }\n} else if (msg.includes(\"saldo\")) {\n  intent = \"saldo\";\n} else if (/^\\d+$/.test(msg) && msg.length >= 4) {\n  intent = \"reference\";\n} else {\n  intent = \"menu\";\n}\n\nconst active_sucursal = user?.cred_sucursal || user?.user_sucursal || sucursal;\n\nreturn [{\n  json: {\n    phone: context.phone,\n    name: context.name || user?.first_name || 'Cliente',\n    msg_body: context.msg_body,\n    bot_phone: context.bot_phone,\n    user_exists: user_exists,\n    user_profile_exists: !!user,\n    balance: parseInt(user?.saldo) || 0,\n    qr_token: user?.qr_code || null,\n    user_sucursal: user?.user_sucursal || null,\n    active_sucursal: active_sucursal,\n    intent: intent\n  }\n}];"
+      },
+      "id": "process-user",
+      "name": "Procesar Usuario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        650,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.intent }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "recarga"
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-intent",
+      "name": "Ruta Principal",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        850,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.user_exists }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-recarga-registered",
+      "name": "¿Usuario Registrado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1050,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola ' + $json.name + '! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos el código de referencia en este chat.'\n  }\n} }}",
+        "options": {}
+      },
+      "id": "reply-registered-info",
+      "name": "Info Usuario Registrado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1280,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga.\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza un Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto de recarga es libre (tú decides cuánto transferir). Una vez que completes el pago, regresa a este chat y envíanos el *Código de Referencia* de tu pago para activarte el saldo.'\n  }\n} }}",
+        "options": {}
+      },
+      "id": "reply-welcome-payment",
+      "name": "Bienvenida y Pago",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1280,
+        180
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\nconst ref = item.msg_body.toUpperCase().trim();\n\nreturn {\n  ...item,\n  ref_code: ref\n};"
+      },
+      "id": "clean-ref",
+      "name": "Limpiar Referencia",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.pabilo.app/userbankpayment/6a2abef29d413e3d6be7ea1c/betaserio",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "appKey",
+              "value": "58994e2b-da90-4115-a6b4-d9b6a2199aa4"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { bank_reference: $json.ref_code } }}",
+        "options": {}
+      },
+      "id": "verify-pabilo-http",
+      "name": "Verificar Pago Pabilo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1250,
+        400
+      ],
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\nconst responseBody = item.responseBody || item;\nconst errorObj = item.error;\n\nconst inputData = $('Limpiar Referencia').first().json;\n\nlet is_valid = false;\nlet amount = 0.00;\nlet error_msg = \"\";\n\nlet bodyObj = {};\nif (typeof responseBody === 'string') {\n  try {\n    bodyObj = JSON.parse(responseBody);\n  } catch (e) {\n    bodyObj = {};\n  }\n} else {\n  bodyObj = responseBody || {};\n}\n\nconst errCode = bodyObj.error || \"\";\nconst rawMsg = bodyObj.message || errorObj?.message || \"\";\n\nconst payment = bodyObj.data?.user_bank_payment || bodyObj.user_bank_payment;\n\nif (!errorObj && payment) {\n  const status = payment.status;\n  if (status === 'verified' || status === 'paid') {\n    is_valid = true;\n    amount = parseFloat(payment.amount) || 0.00;\n  } else {\n    error_msg = \"El pago no está en estado verificado o pagado (estado actual: \" + status + \").\";\n  }\n} else {\n  if (errCode === 'PAYMENT_NOT_FOUND' || rawMsg.includes('payment not found') || rawMsg.includes('PAYMENT_NOT_FOUND')) {\n    error_msg = \"No encontramos ningún Pago Móvil registrado con ese número de referencia en nuestro banco. Por favor verifica los datos e inténtalo de nuevo.\";\n  } else if (errCode === 'PAYMENT_AMOUNT_NOT_VALID' || rawMsg.includes('payment amount not valid')) {\n    error_msg = \"El monto del pago verificado no es válido.\";\n  } else if (rawMsg) {\n    error_msg = rawMsg;\n  } else {\n    error_msg = \"La referencia no se pudo verificar en este momento. Inténtalo de nuevo más tarde.\";\n  }\n}\n\nreturn {\n  phone: inputData.phone,\n  name: inputData.name,\n  msg_body: inputData.msg_body,\n  bot_phone: inputData.bot_phone,\n  user_exists: inputData.user_exists,\n  balance: inputData.balance,\n  qr_token: inputData.qr_token,\n  ref_code: inputData.ref_code,\n  is_valid_ref: is_valid,\n  payment_amount: amount,\n  error_msg: error_msg,\n  active_sucursal: inputData.active_sucursal,\n  user_sucursal: inputData.user_sucursal\n};"
+      },
+      "id": "eval-pabilo-res",
+      "name": "Evaluar Pago Pabilo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1450,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.is_valid_ref }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-ref-valid",
+      "name": "¿Referencia Válida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1650,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '❌ El código de referencia (*' + $json.msg_body + '*) no se pudo verificar.\\n\\nMotivo: ' + $json.error_msg + '\\n\\nSi no has pagado, puedes realizar tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre.'\n  }\n} }}",
+        "options": {}
+      },
+      "id": "reply-invalid-ref",
+      "name": "Mensaje Referencia Inválida",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1850,
+        500
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT qr_code_token, balance, payment_inserted \nFROM public.registrar_pago(\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}',\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.name }}',\n  '',\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.ref_code }}',\n  {{ $(\"Evaluar Pago Pabilo\").first().json.payment_amount }},\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.active_sucursal }}'\n);"
+      },
+      "id": "db-apply-payment",
+      "name": "Registrar Pago y Saldo",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        1850,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CsD6I7qpB4gzoBzS",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const pgResult = $input.all();\nconst context = $('Evaluar Pago Pabilo').first().json;\n\nif (pgResult.length === 0 || !pgResult[0].json.payment_inserted) {\n  return [{\n    json: {\n      ...context,\n      success: false,\n      error_msg: 'La referencia de pago ya ha sido utilizada anteriormente en este sistema.'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...context,\n    success: true,\n    qr_code_token: pgResult[0].json.qr_code_token,\n    balance: parseFloat(pgResult[0].json.balance)\n  }\n}];"
+      },
+      "id": "eval-db-result",
+      "name": "Evaluar Resultado DB",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.success }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-db-success",
+      "name": "¿DB Registrada?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'text', text: { body: '❌ Hubo un problema al registrar tu pago: ' + $json.error_msg + '\\n\\nVerifica que la referencia no haya sido utilizada antes.' } } }}",
+        "options": {}
+      },
+      "id": "reply-db-error",
+      "name": "Mensaje Error Registro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2450,
+        400
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: '¡Recarga Exitosa! 🎉\\n\\nSe han abonado ' + $json.payment_amount + ' Bs a tu cuenta.\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina para dispensar tu agua.' } } }}",
+        "options": {}
+      },
+      "id": "reply-success-qr",
+      "name": "Enviar QR Exitoso",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        2450,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.intent }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "saldo"
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-is-saldo",
+      "name": "¿Consulta de Saldo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1050,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.user_exists }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-saldo-user-exists",
+      "name": "¿Usuario Existe para Saldo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1250,
+        280
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: 'Hola ' + ($json.name || 'Cliente') + ', tu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina para dispensar tu agua.' } } }}",
+        "options": {}
+      },
+      "id": "reply-saldo-qr",
+      "name": "Enviar QR y Saldo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1480,
+        200
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water.\\n\\nNo te encuentras registrado todavía. Para registrarte y cargar saldo en tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre. Una vez realizado, envíanos el *Código de Referencia* por este chat para activarte el saldo.'\n  }\n} }}",
+        "options": {}
+      },
+      "id": "reply-not-registered-saldo",
+      "name": "Saldo Usuario No Registrado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1480,
+        360
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.intent }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "reference"
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-is-reference",
+      "name": "¿Es Intención Referencia?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1050,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.user_exists }}",
+              "operator": {
+                "operation": "true",
+                "type": "boolean"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-menu-user-exists",
+      "name": "¿Menú Usuario Existe?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1250,
+        580
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'interactive',\n  interactive: {\n    type: 'button',\n    body: {\n      text: '¡Hola ' + $json.name + '! Soy Ali 👽, tu asistente de Alien Water. ¿En qué te puedo ayudar hoy?\\n\\nSelecciona una de las siguientes opciones o presiona uno de los botones:'\n    },\n    action: {\n      buttons: [\n        { type: 'reply', reply: { id: 'recarga', title: 'Recargar' } },\n        { type: 'reply', reply: { id: 'saldo', title: 'Consultar Saldo' } }\n      ]\n    }\n  }\n} }}",
+        "options": {}
+      },
+      "id": "reply-menu-registered",
+      "name": "Menú Usuario Registrado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1480,
+        520
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga. 💧\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza lo siguiente:\\n\\n1️⃣ Realiza tu Pago Móvil a:\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n*(El monto es libre)*\\n\\n2️⃣ Regresa a este chat y envíanos el *Código de Referencia* de tu pago.\\n\\n¡Eso es todo! El bot verificará tu pago y te enviará un código QR con tu saldo activo.'\n  }\n} }}",
+        "options": {}
+      },
+      "id": "reply-menu-unregistered",
+      "name": "Menú Usuario No Registrado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1480,
+        640
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=INSERT INTO public.users (phone, first_name, last_name, sucursal)\nVALUES ('{{ $json.phone }}', '{{ $json.name }}', '', '{{ $json.active_sucursal }}')\nON CONFLICT (phone) DO UPDATE SET sucursal = EXCLUDED.sucursal, updated_at = CURRENT_TIMESTAMP;"
+      },
+      "id": "db-register-sucursal",
+      "name": "Registrar Sucursal Usuario",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        1050,
+        80
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CsD6I7qpB4gzoBzS",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.intent }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "recarga_invalida"
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-recarga-invalida",
+      "name": "¿Recarga Inválida?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1050,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '❌ Para iniciar tu recarga, por favor incluye el código de la sucursal.\\n\\nEscribe: *Recargar COD[código]* (ej. *Recargar COD100*).\\n\\nEl código de 3 dígitos está pegado en la máquina física.'\n  }\n} }}",
+        "options": {}
+      },
+      "id": "reply-recarga-invalida",
+      "name": "Mensaje Recarga Invalida",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1250,
+        150
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.active_sucursal }}",
+              "operator": {
+                "operation": "isNotEmpty",
+                "type": "string"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "router-has-sucursal",
+      "name": "¿Tiene Sucursal?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1650,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.ycloud.com/v2/whatsapp/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '❌ No pudimos procesar tu recarga.\\n\\nPor favor, escribe primero *Recargar COD[código]* (ej. *Recargar COD100*) para indicar en qué máquina te encuentras, y luego envía tu referencia de pago.'\n  }\n} }}",
+        "options": {}
+      },
+      "id": "reply-sin-sucursal",
+      "name": "Mensaje Sin Sucursal",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1850,
+        450
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "TDkDp0kZsIwYMvOj",
+          "name": "Ycloud Heric"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook (yCloud)": {
+      "main": [
+        [
+          {
+            "node": "Contexto Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Contexto Mensaje": {
+      "main": [
+        [
+          {
+            "node": "Consultar Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar Usuario": {
+      "main": [
+        [
+          {
+            "node": "Procesar Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Usuario": {
+      "main": [
+        [
+          {
+            "node": "Ruta Principal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ruta Principal": {
+      "main": [
+        [
+          {
+            "node": "Registrar Sucursal Usuario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Recarga Inválida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Usuario Registrado?": {
+      "main": [
+        [
+          {
+            "node": "Info Usuario Registrado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Bienvenida y Pago",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limpiar Referencia": {
+      "main": [
+        [
+          {
+            "node": "Verificar Pago Pabilo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verificar Pago Pabilo": {
+      "main": [
+        [
+          {
+            "node": "Evaluar Pago Pabilo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar Pago Pabilo": {
+      "main": [
+        [
+          {
+            "node": "¿Referencia Válida?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Referencia Válida?": {
+      "main": [
+        [
+          {
+            "node": "¿Tiene Sucursal?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje Referencia Inválida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Pago y Saldo": {
+      "main": [
+        [
+          {
+            "node": "Evaluar Resultado DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar Resultado DB": {
+      "main": [
+        [
+          {
+            "node": "¿DB Registrada?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿DB Registrada?": {
+      "main": [
+        [
+          {
+            "node": "Enviar QR Exitoso",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje Error Registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Consulta de Saldo?": {
+      "main": [
+        [
+          {
+            "node": "¿Usuario Existe para Saldo?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Es Intención Referencia?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Usuario Existe para Saldo?": {
+      "main": [
+        [
+          {
+            "node": "Enviar QR y Saldo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Saldo Usuario No Registrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es Intención Referencia?": {
+      "main": [
+        [
+          {
+            "node": "Limpiar Referencia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Menú Usuario Existe?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Menú Usuario Existe?": {
+      "main": [
+        [
+          {
+            "node": "Menú Usuario Registrado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Menú Usuario No Registrado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registrar Sucursal Usuario": {
+      "main": [
+        [
+          {
+            "node": "¿Usuario Registrado?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Recarga Inválida?": {
+      "main": [
+        [
+          {
+            "node": "Mensaje Recarga Invalida",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Consulta de Saldo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Tiene Sucursal?": {
+      "main": [
+        [
+          {
+            "node": "Registrar Pago y Saldo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje Sin Sucursal",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {}
+}

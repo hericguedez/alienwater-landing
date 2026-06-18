@@ -1,0 +1,2194 @@
+﻿{
+    "updatedAt":  "2026-06-18T01:53:59.830Z",
+    "createdAt":  "2026-06-17T15:31:12.065Z",
+    "id":  "3psmiIL4ZH7WS7xk",
+    "name":  "Agente_Alen_Water",
+    "description":  null,
+    "active":  true,
+    "isArchived":  false,
+    "nodes":  [
+                  {
+                      "parameters":  {
+                                         "httpMethod":  "POST",
+                                         "path":  "alen_water_recarga",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "6910d25d-52a5-4202-9727-e2bc9d938c33",
+                      "name":  "Webhook (yCloud)",
+                      "type":  "n8n-nodes-base.webhook",
+                      "typeVersion":  2.1,
+                      "position":  [
+                                       -1152,
+                                       48
+                                   ],
+                      "webhookId":  "f7a5b3d9-9e8c-4a3d-8c2b-6d1a9e8f7a6b"
+                  },
+                  {
+                      "parameters":  {
+                                         "assignments":  {
+                                                             "assignments":  [
+                                                                                 {
+                                                                                     "id":  "a1",
+                                                                                     "name":  "phone",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ $json.body.whatsappInboundMessage.from }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "a2",
+                                                                                     "name":  "name",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ $json.body.whatsappInboundMessage.customerProfile.name || \u0027Cliente\u0027 }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "a3",
+                                                                                     "name":  "msg_body",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ ($json.body.whatsappInboundMessage.text?.body || $json.body.whatsappInboundMessage.interactive?.button_reply?.title || $json.body.whatsappInboundMessage.interactive?.button_reply?.id || \u0027\u0027).trim() }}"
+                                                                                 },
+                                                                                 {
+                                                                                     "id":  "a4",
+                                                                                     "name":  "bot_phone",
+                                                                                     "type":  "string",
+                                                                                     "value":  "={{ $json.body.whatsappInboundMessage.to }}"
+                                                                                 }
+                                                                             ]
+                                                         },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "4ffe2be1-7ce4-4c96-98ff-040bc134db06",
+                      "name":  "Contexto Mensaje",
+                      "type":  "n8n-nodes-base.set",
+                      "typeVersion":  3.4,
+                      "position":  [
+                                       -896,
+                                       48
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "executeQuery",
+                                         "query":  "SELECT * FROM public.users WHERE phone = \u0027{{ $json.phone }}\u0027;",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "312c1575-8743-4f6c-8974-555917d01546",
+                      "name":  "Consultar Usuario",
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.2,
+                      "position":  [
+                                       -704,
+                                       48
+                                   ],
+                      "credentials":  {
+                                          "postgres":  {
+                                                           "id":  "CsD6I7qpB4gzoBzS",
+                                                           "name":  "Postgres account"
+                                                       }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const user = $input.all()[0]?.json;\nconst context = $(\u0027Contexto Mensaje\u0027).first().json;\n\nconst msg = (context.msg_body || \"\").trim().toLowerCase();\nlet intent = \"menu\";\n\nif (msg === \"recarga\" || msg === \"recargar\") {\n  intent = \"recarga\";\n} else if (msg.includes(\"saldo\")) {\n  intent = \"saldo\";\n} else if (/^\\d+$/.test(msg) \u0026\u0026 msg.length \u003e= 4) {\n  intent = \"reference\";\n} else {\n  intent = \"menu\";\n}\n\nreturn [{\n  json: {\n    phone: context.phone,\n    name: context.name,\n    msg_body: context.msg_body,\n    bot_phone: context.bot_phone,\n    user_exists: !!user?.phone,\n    balance: parseFloat(user?.balance) || 0,\n    qr_token: user?.qr_code_token || null,\n    intent: intent\n  }\n}];"
+                                     },
+                      "id":  "678df5e0-069a-48ca-ae31-7bc553263e93",
+                      "name":  "Procesar Usuario",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       -496,
+                                       48
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  false,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c1",
+                                                                                   "leftValue":  "={{ $json.intent }}",
+                                                                                   "operator":  {
+                                                                                                    "operation":  "equals",
+                                                                                                    "type":  "string"
+                                                                                                },
+                                                                                   "rightValue":  "recarga"
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "e96d59d8-7421-4ee6-ae96-c0ce2a619bf6",
+                      "name":  "Ruta Principal",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       -304,
+                                       48
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c1",
+                                                                                   "leftValue":  "={{ $json.user_exists }}",
+                                                                                   "operator":  {
+                                                                                                    "operation":  "true",
+                                                                                                    "type":  "boolean"
+                                                                                                }
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "131e7416-de93-492d-9df5-99aa34e70edd",
+                      "name":  "¿Usuario Registrado?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       -96,
+                                       -64
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027¡Hola \u0027 + $json.name + \u0027! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de \u0027 + $json.balance + \u0027 Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos el código de referencia en este chat.\u0027\n  }\n} }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "9f8ec850-3db9-4ba0-a1e1-07d87165ae31",
+                      "name":  "Info Usuario Registrado",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       128,
+                                       -160
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga.\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza un Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto de recarga es libre (tú decides cuánto transferir). Una vez que completes el pago, regresa a este chat y envíanos el *Código de Referencia* de tu pago para activarte el saldo.\u0027\n  }\n} }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "c9832f17-d4ea-4bd8-bd82-4bb88141dd02",
+                      "name":  "Bienvenida y Pago",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       128,
+                                       32
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const item = $input.item.json;\nconst ref = item.msg_body.toUpperCase().trim();\n\nreturn {\n  ...item,\n  ref_code: ref\n};"
+                                     },
+                      "id":  "336e97df-20d7-49df-a101-db80e10dcfe6",
+                      "name":  "Limpiar Referencia",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       -96,
+                                       240
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.pabilo.app/userbankpayment/6a2abef29d413e3d6be7ea1c/betaserio",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     },
+                                                                                     {
+                                                                                         "name":  "appKey",
+                                                                                         "value":  "58994e2b-da90-4115-a6b4-d9b6a2199aa4"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ { bank_reference: $json.ref_code } }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "5087a77a-4558-4ae9-bc1e-f5ec8cbbfe7b",
+                      "name":  "Verificar Pago Pabilo",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       112,
+                                       240
+                                   ],
+                      "onError":  "continueRegularOutput"
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const item = $input.item.json;\nconst responseBody = item.responseBody || item;\nconst errorObj = item.error;\n\nconst inputData = $(\u0027Limpiar Referencia\u0027).first().json;\n\nlet is_valid = false;\nlet amount = 0.00;\nlet error_msg = \"\";\n\nlet bodyObj = {};\nif (typeof responseBody === \u0027string\u0027) {\n  try {\n    bodyObj = JSON.parse(responseBody);\n  } catch (e) {\n    bodyObj = {};\n  }\n} else {\n  bodyObj = responseBody || {};\n}\n\nconst errCode = bodyObj.error || \"\";\nconst rawMsg = bodyObj.message || errorObj?.message || \"\";\n\nconst payment = bodyObj.data?.user_bank_payment || bodyObj.user_bank_payment;\n\nif (!errorObj \u0026\u0026 payment) {\n  const status = payment.status;\n  if (status === \u0027verified\u0027 || status === \u0027paid\u0027) {\n    is_valid = true;\n    amount = parseFloat(payment.amount) || 0.00;\n  } else {\n    error_msg = \"El pago no está en estado verificado o pagado (estado actual: \" + status + \").\";\n  }\n} else {\n  if (errCode === \u0027PAYMENT_NOT_FOUND\u0027 || rawMsg.includes(\u0027payment not found\u0027) || rawMsg.includes(\u0027PAYMENT_NOT_FOUND\u0027)) {\n    error_msg = \"No encontramos ningún Pago Móvil registrado con ese número de referencia en nuestro banco. Por favor verifica los datos e inténtalo de nuevo.\";\n  } else if (errCode === \u0027PAYMENT_AMOUNT_NOT_VALID\u0027 || rawMsg.includes(\u0027payment amount not valid\u0027)) {\n    error_msg = \"El monto del pago verificado no es válido.\";\n  } else if (rawMsg) {\n    error_msg = rawMsg;\n  } else {\n    error_msg = \"La referencia no se pudo verificar en este momento. Inténtalo de nuevo más tarde.\";\n  }\n}\n\nreturn {\n  phone: inputData.phone,\n  name: inputData.name,\n  msg_body: inputData.msg_body,\n  bot_phone: inputData.bot_phone,\n  user_exists: inputData.user_exists,\n  balance: inputData.balance,\n  qr_token: inputData.qr_token,\n  ref_code: inputData.ref_code,\n  is_valid_ref: is_valid,\n  payment_amount: amount,\n  error_msg: error_msg\n};"
+                                     },
+                      "id":  "b204500d-c280-44c8-85de-4ec8c3bfd780",
+                      "name":  "Evaluar Pago Pabilo",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       304,
+                                       240
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c1",
+                                                                                   "leftValue":  "={{ $json.is_valid_ref }}",
+                                                                                   "operator":  {
+                                                                                                    "operation":  "true",
+                                                                                                    "type":  "boolean"
+                                                                                                }
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "02a2b5c0-98b6-4b1c-a97b-4d5620038d73",
+                      "name":  "¿Referencia Válida?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       512,
+                                       240
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027❌ El código de referencia (*\u0027 + $json.msg_body + \u0027*) no se pudo verificar.\\n\\nMotivo: \u0027 + $json.error_msg + \u0027\\n\\nSi no has pagado, puedes realizar tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre.\u0027\n  }\n} }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "1ae607a0-b558-4746-b6a8-fc824a4506cf",
+                      "name":  "Mensaje Referencia Inválida",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       704,
+                                       352
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "operation":  "executeQuery",
+                                         "query":  "WITH inserted_payment AS (\n  INSERT INTO public.payments (phone, payment_reference, amount) \n  VALUES (\n    \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}\u0027, \n    \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.ref_code }}\u0027, \n    {{ $(\"Evaluar Pago Pabilo\").first().json.payment_amount }}\n  )\n  ON CONFLICT (payment_reference) DO NOTHING\n  RETURNING id\n),\nupdated_user AS (\n  INSERT INTO public.users (phone, first_name, last_name, balance)\n  SELECT \n    \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}\u0027, \n    \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.name }}\u0027, \n    \u0027\u0027, \n    {{ $(\"Evaluar Pago Pabilo\").first().json.payment_amount }}\n  WHERE EXISTS (SELECT 1 FROM inserted_payment)\n  ON CONFLICT (phone) \n  DO UPDATE SET balance = users.balance + EXCLUDED.balance, updated_at = CURRENT_TIMESTAMP\n  RETURNING qr_code_token, balance\n)\nSELECT \n  COALESCE(\n    (SELECT qr_code_token FROM updated_user),\n    (SELECT qr_code_token FROM public.users WHERE phone = \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}\u0027)\n  ) AS qr_code_token,\n  COALESCE(\n    (SELECT balance FROM updated_user),\n    (SELECT balance FROM public.users WHERE phone = \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}\u0027)\n  ) AS balance,\n  EXISTS (SELECT 1 FROM inserted_payment) AS payment_inserted;",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "232e1d4b-e076-4582-8482-330fb25fee7e",
+                      "name":  "Registrar Pago y Saldo",
+                      "type":  "n8n-nodes-base.postgres",
+                      "typeVersion":  2.2,
+                      "position":  [
+                                       704,
+                                       144
+                                   ],
+                      "credentials":  {
+                                          "postgres":  {
+                                                           "id":  "CsD6I7qpB4gzoBzS",
+                                                           "name":  "Postgres account"
+                                                       }
+                                      },
+                      "onError":  "continueRegularOutput"
+                  },
+                  {
+                      "parameters":  {
+                                         "jsCode":  "const pgResult = $input.all();\nconst context = $(\u0027Evaluar Pago Pabilo\u0027).first().json;\n\nif (pgResult.length === 0 || !pgResult[0].json.payment_inserted) {\n  return [{\n    json: {\n      ...context,\n      success: false,\n      error_msg: \u0027La referencia de pago ya ha sido utilizada anteriormente en este sistema.\u0027\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...context,\n    success: true,\n    qr_code_token: pgResult[0].json.qr_code_token,\n    balance: parseFloat(pgResult[0].json.balance)\n  }\n}];"
+                                     },
+                      "id":  "2e325c79-c01b-4df8-b4c3-f8051871a1ba",
+                      "name":  "Evaluar Resultado DB",
+                      "type":  "n8n-nodes-base.code",
+                      "typeVersion":  2,
+                      "position":  [
+                                       912,
+                                       144
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c1",
+                                                                                   "leftValue":  "={{ $json.success }}",
+                                                                                   "operator":  {
+                                                                                                    "operation":  "true",
+                                                                                                    "type":  "boolean"
+                                                                                                }
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "443a605a-ea49-4a1e-9b19-f70c2c86586c",
+                      "name":  "¿DB Registrada?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       1104,
+                                       144
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ { from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to, to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from, type: \u0027text\u0027, text: { body: \u0027❌ Hubo un problema al registrar tu pago: \u0027 + $json.error_msg + \u0027\\n\\nVerifica que la referencia no haya sido utilizada antes.\u0027 } } }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "23d1ba71-4ad9-4611-a4da-018154fe7110",
+                      "name":  "Mensaje Error Registro",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       1312,
+                                       240
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ { from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to, to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from, type: \u0027image\u0027, image: { link: \u0027https://api.qrserver.com/v1/create-qr-code/?size=300x300\u0026data=RECARGA-\u0027 + Math.round($json.balance), caption: \u0027¡Recarga Exitosa! 🎉\\n\\nSe han abonado \u0027 + $json.payment_amount + \u0027 Bs a tu cuenta.\\nTu saldo actual es de \u0027 + $json.balance + \u0027 Bs.\\n\\nPresenta este código QR en el lector de la máquina para dispensar tu agua.\u0027 } } }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "ebd4cfd7-bb65-4390-afeb-dc2908473da0",
+                      "name":  "Enviar QR Exitoso",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       1312,
+                                       48
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  false,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c1",
+                                                                                   "leftValue":  "={{ $json.intent }}",
+                                                                                   "operator":  {
+                                                                                                    "operation":  "equals",
+                                                                                                    "type":  "string"
+                                                                                                },
+                                                                                   "rightValue":  "saldo"
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "73d35161-183f-4ca3-828e-31b1056cdd16",
+                      "name":  "¿Consulta de Saldo?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       -96,
+                                       128
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c1",
+                                                                                   "leftValue":  "={{ $json.user_exists }}",
+                                                                                   "operator":  {
+                                                                                                    "operation":  "true",
+                                                                                                    "type":  "boolean"
+                                                                                                }
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "37f30caf-c681-4f47-98ce-14247f05c411",
+                      "name":  "¿Usuario Existe para Saldo?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       112,
+                                       128
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ { from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to, to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from, type: \u0027image\u0027, image: { link: \u0027https://api.qrserver.com/v1/create-qr-code/?size=300x300\u0026data=RECARGA-\u0027 + Math.round($json.balance), caption: \u0027Hola \u0027 + ($json.name || \u0027Cliente\u0027) + \u0027, tu saldo actual es de \u0027 + $json.balance + \u0027 Bs.\\n\\nPresenta este código QR en el lector de la máquina para dispensar tu agua.\u0027 } } }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "fc18582b-e553-428e-bd82-950f748a2762",
+                      "name":  "Enviar QR y Saldo",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       336,
+                                       48
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027¡Hola! Soy Ali 👽, tu asistente de Alien Water.\\n\\nNo te encuentras registrado todavía. Para registrarte y cargar saldo en tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre. Una vez realizado, envíanos el *Código de Referencia* por este chat para activarte el saldo.\u0027\n  }\n} }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "146b763f-7f53-4870-b89c-6d3d37037cc9",
+                      "name":  "Saldo Usuario No Registrado",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       336,
+                                       208
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c1",
+                                                                                   "leftValue":  "={{ $json.intent }}",
+                                                                                   "operator":  {
+                                                                                                    "operation":  "equals",
+                                                                                                    "type":  "string"
+                                                                                                },
+                                                                                   "rightValue":  "reference"
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "6c957385-f675-4546-a015-53a9f2eb23f2",
+                      "name":  "¿Es Intención Referencia?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       48,
+                                       560
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "conditions":  {
+                                                            "options":  {
+                                                                            "caseSensitive":  true,
+                                                                            "leftValue":  "",
+                                                                            "typeValidation":  "strict",
+                                                                            "version":  2
+                                                                        },
+                                                            "conditions":  [
+                                                                               {
+                                                                                   "id":  "c1",
+                                                                                   "leftValue":  "={{ $json.user_exists }}",
+                                                                                   "operator":  {
+                                                                                                    "operation":  "true",
+                                                                                                    "type":  "boolean"
+                                                                                                }
+                                                                               }
+                                                                           ],
+                                                            "combinator":  "and"
+                                                        },
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "cd5d69cf-f2e3-4f9e-9c30-4bd43ed6ebfa",
+                      "name":  "¿Menú Usuario Existe?",
+                      "type":  "n8n-nodes-base.if",
+                      "typeVersion":  2.3,
+                      "position":  [
+                                       256,
+                                       544
+                                   ]
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027interactive\u0027,\n  interactive: {\n    type: \u0027button\u0027,\n    body: {\n      text: \u0027¡Hola \u0027 + $json.name + \u0027! Soy Ali 👽, tu asistente de Alien Water. ¿En qué te puedo ayudar hoy?\\n\\nSelecciona una de las siguientes opciones o presiona uno de los botones:\u0027\n    },\n    action: {\n      buttons: [\n        { type: \u0027reply\u0027, reply: { id: \u0027recarga\u0027, title: \u0027Recargar\u0027 } },\n        { type: \u0027reply\u0027, reply: { id: \u0027saldo\u0027, title: \u0027Consultar Saldo\u0027 } }\n      ]\n    }\n  }\n} }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "6c3ba78a-ed22-43ec-a569-30bb78197ab6",
+                      "name":  "Menú Usuario Registrado",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       336,
+                                       368
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  },
+                  {
+                      "parameters":  {
+                                         "method":  "POST",
+                                         "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                         "authentication":  "genericCredentialType",
+                                         "genericAuthType":  "httpHeaderAuth",
+                                         "sendHeaders":  true,
+                                         "headerParameters":  {
+                                                                  "parameters":  [
+                                                                                     {
+                                                                                         "name":  "Content-Type",
+                                                                                         "value":  "application/json"
+                                                                                     }
+                                                                                 ]
+                                                              },
+                                         "sendBody":  true,
+                                         "specifyBody":  "json",
+                                         "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga. 💧\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza lo siguiente:\\n\\n1️⃣ Realiza tu Pago Móvil a:\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n*(El monto es libre)*\\n\\n2️⃣ Regresa a este chat y envíanos el *Código de Referencia* de tu pago.\\n\\n¡Eso es todo! El bot verificará tu pago y te enviará un código QR con tu saldo activo.\u0027\n  }\n} }}",
+                                         "options":  {
+
+                                                     }
+                                     },
+                      "id":  "a514dcfe-b7ab-48fa-b6d9-590b12bf33b2",
+                      "name":  "Menú Usuario No Registrado",
+                      "type":  "n8n-nodes-base.httpRequest",
+                      "typeVersion":  4.3,
+                      "position":  [
+                                       528,
+                                       688
+                                   ],
+                      "credentials":  {
+                                          "httpHeaderAuth":  {
+                                                                 "id":  "TDkDp0kZsIwYMvOj",
+                                                                 "name":  "Ycloud Heric"
+                                                             }
+                                      }
+                  }
+              ],
+    "connections":  {
+                        "Webhook (yCloud)":  {
+                                                 "main":  [
+                                                              [
+                                                                  {
+                                                                      "node":  "Contexto Mensaje",
+                                                                      "type":  "main",
+                                                                      "index":  0
+                                                                  }
+                                                              ]
+                                                          ]
+                                             },
+                        "Contexto Mensaje":  {
+                                                 "main":  [
+                                                              [
+                                                                  {
+                                                                      "node":  "Consultar Usuario",
+                                                                      "type":  "main",
+                                                                      "index":  0
+                                                                  }
+                                                              ]
+                                                          ]
+                                             },
+                        "Consultar Usuario":  {
+                                                  "main":  [
+                                                               [
+                                                                   {
+                                                                       "node":  "Procesar Usuario",
+                                                                       "type":  "main",
+                                                                       "index":  0
+                                                                   }
+                                                               ]
+                                                           ]
+                                              },
+                        "Procesar Usuario":  {
+                                                 "main":  [
+                                                              [
+                                                                  {
+                                                                      "node":  "Ruta Principal",
+                                                                      "type":  "main",
+                                                                      "index":  0
+                                                                  }
+                                                              ]
+                                                          ]
+                                             },
+                        "Ruta Principal":  {
+                                               "main":  [
+                                                            [
+                                                                {
+                                                                    "node":  "¿Usuario Registrado?",
+                                                                    "type":  "main",
+                                                                    "index":  0
+                                                                }
+                                                            ],
+                                                            [
+                                                                {
+                                                                    "node":  "¿Consulta de Saldo?",
+                                                                    "type":  "main",
+                                                                    "index":  0
+                                                                }
+                                                            ]
+                                                        ]
+                                           },
+                        "¿Usuario Registrado?":  {
+                                                     "main":  [
+                                                                  [
+                                                                      {
+                                                                          "node":  "Info Usuario Registrado",
+                                                                          "type":  "main",
+                                                                          "index":  0
+                                                                      }
+                                                                  ],
+                                                                  [
+                                                                      {
+                                                                          "node":  "Bienvenida y Pago",
+                                                                          "type":  "main",
+                                                                          "index":  0
+                                                                      }
+                                                                  ]
+                                                              ]
+                                                 },
+                        "Limpiar Referencia":  {
+                                                   "main":  [
+                                                                [
+                                                                    {
+                                                                        "node":  "Verificar Pago Pabilo",
+                                                                        "type":  "main",
+                                                                        "index":  0
+                                                                    }
+                                                                ]
+                                                            ]
+                                               },
+                        "Verificar Pago Pabilo":  {
+                                                      "main":  [
+                                                                   [
+                                                                       {
+                                                                           "node":  "Evaluar Pago Pabilo",
+                                                                           "type":  "main",
+                                                                           "index":  0
+                                                                       }
+                                                                   ]
+                                                               ]
+                                                  },
+                        "Evaluar Pago Pabilo":  {
+                                                    "main":  [
+                                                                 [
+                                                                     {
+                                                                         "node":  "¿Referencia Válida?",
+                                                                         "type":  "main",
+                                                                         "index":  0
+                                                                     }
+                                                                 ]
+                                                             ]
+                                                },
+                        "¿Referencia Válida?":  {
+                                                    "main":  [
+                                                                 [
+                                                                     {
+                                                                         "node":  "Registrar Pago y Saldo",
+                                                                         "type":  "main",
+                                                                         "index":  0
+                                                                     }
+                                                                 ],
+                                                                 [
+                                                                     {
+                                                                         "node":  "Mensaje Referencia Inválida",
+                                                                         "type":  "main",
+                                                                         "index":  0
+                                                                     }
+                                                                 ]
+                                                             ]
+                                                },
+                        "Registrar Pago y Saldo":  {
+                                                       "main":  [
+                                                                    [
+                                                                        {
+                                                                            "node":  "Evaluar Resultado DB",
+                                                                            "type":  "main",
+                                                                            "index":  0
+                                                                        }
+                                                                    ]
+                                                                ]
+                                                   },
+                        "Evaluar Resultado DB":  {
+                                                     "main":  [
+                                                                  [
+                                                                      {
+                                                                          "node":  "¿DB Registrada?",
+                                                                          "type":  "main",
+                                                                          "index":  0
+                                                                      }
+                                                                  ]
+                                                              ]
+                                                 },
+                        "¿DB Registrada?":  {
+                                                "main":  [
+                                                             [
+                                                                 {
+                                                                     "node":  "Enviar QR Exitoso",
+                                                                     "type":  "main",
+                                                                     "index":  0
+                                                                 }
+                                                             ],
+                                                             [
+                                                                 {
+                                                                     "node":  "Mensaje Error Registro",
+                                                                     "type":  "main",
+                                                                     "index":  0
+                                                                 }
+                                                             ]
+                                                         ]
+                                            },
+                        "¿Consulta de Saldo?":  {
+                                                    "main":  [
+                                                                 [
+                                                                     {
+                                                                         "node":  "¿Usuario Existe para Saldo?",
+                                                                         "type":  "main",
+                                                                         "index":  0
+                                                                     }
+                                                                 ],
+                                                                 [
+                                                                     {
+                                                                         "node":  "¿Es Intención Referencia?",
+                                                                         "type":  "main",
+                                                                         "index":  0
+                                                                     }
+                                                                 ]
+                                                             ]
+                                                },
+                        "¿Usuario Existe para Saldo?":  {
+                                                            "main":  [
+                                                                         [
+                                                                             {
+                                                                                 "node":  "Enviar QR y Saldo",
+                                                                                 "type":  "main",
+                                                                                 "index":  0
+                                                                             }
+                                                                         ],
+                                                                         [
+                                                                             {
+                                                                                 "node":  "Saldo Usuario No Registrado",
+                                                                                 "type":  "main",
+                                                                                 "index":  0
+                                                                             }
+                                                                         ]
+                                                                     ]
+                                                        },
+                        "¿Es Intención Referencia?":  {
+                                                          "main":  [
+                                                                       [
+                                                                           {
+                                                                               "node":  "Limpiar Referencia",
+                                                                               "type":  "main",
+                                                                               "index":  0
+                                                                           }
+                                                                       ],
+                                                                       [
+                                                                           {
+                                                                               "node":  "¿Menú Usuario Existe?",
+                                                                               "type":  "main",
+                                                                               "index":  0
+                                                                           }
+                                                                       ]
+                                                                   ]
+                                                      },
+                        "¿Menú Usuario Existe?":  {
+                                                      "main":  [
+                                                                   [
+                                                                       {
+                                                                           "node":  "Menú Usuario Registrado",
+                                                                           "type":  "main",
+                                                                           "index":  0
+                                                                       }
+                                                                   ],
+                                                                   [
+                                                                       {
+                                                                           "node":  "Menú Usuario No Registrado",
+                                                                           "type":  "main",
+                                                                           "index":  0
+                                                                       }
+                                                                   ]
+                                                               ]
+                                                  }
+                    },
+    "settings":  {
+                     "executionOrder":  "v1",
+                     "binaryMode":  "separate",
+                     "availableInMCP":  false,
+                     "timeSavedMode":  "fixed",
+                     "timezone":  "America/Caracas",
+                     "callerPolicy":  "workflowsFromSameOwner"
+                 },
+    "staticData":  null,
+    "meta":  {
+                 "templateCredsSetupCompleted":  true
+             },
+    "nodeGroups":  [
+
+                   ],
+    "pinData":  {
+
+                },
+    "versionId":  "7eada8a3-4e38-43f9-8d8c-fb16274b2ef4",
+    "activeVersionId":  "2fbc90aa-b343-45c5-85bb-e587d039ffde",
+    "versionCounter":  16,
+    "triggerCount":  1,
+    "sourceWorkflowId":  null,
+    "shared":  [
+                   {
+                       "updatedAt":  "2026-06-17T15:31:12.065Z",
+                       "createdAt":  "2026-06-17T15:31:12.065Z",
+                       "role":  "workflow:owner",
+                       "workflowId":  "3psmiIL4ZH7WS7xk",
+                       "projectId":  "WN3ENxgGoNodBBqj",
+                       "project":  {
+                                       "updatedAt":  "2026-06-17T15:28:55.781Z",
+                                       "createdAt":  "2026-06-17T15:08:25.584Z",
+                                       "id":  "WN3ENxgGoNodBBqj",
+                                       "name":  "Cesar Suarez \u003ccesarsuarez2004@gmail.com\u003e",
+                                       "type":  "personal",
+                                       "icon":  null,
+                                       "description":  null,
+                                       "customTelemetryTags":  [
+
+                                                               ],
+                                       "creatorId":  "e8eaada5-a0e1-49e0-a2e3-9bf94f455276"
+                                   }
+                   }
+               ],
+    "tags":  [
+
+             ],
+    "activeVersion":  {
+                          "updatedAt":  "2026-06-17T15:45:29.056Z",
+                          "createdAt":  "2026-06-17T15:45:26.827Z",
+                          "versionId":  "2fbc90aa-b343-45c5-85bb-e587d039ffde",
+                          "workflowId":  "3psmiIL4ZH7WS7xk",
+                          "nodes":  [
+                                        {
+                                            "parameters":  {
+                                                               "httpMethod":  "POST",
+                                                               "path":  "alen_water_recarga",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "6910d25d-52a5-4202-9727-e2bc9d938c33",
+                                            "name":  "Webhook (yCloud)",
+                                            "type":  "n8n-nodes-base.webhook",
+                                            "typeVersion":  2.1,
+                                            "position":  [
+                                                             -1152,
+                                                             48
+                                                         ],
+                                            "webhookId":  "f7a5b3d9-9e8c-4a3d-8c2b-6d1a9e8f7a6b"
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "assignments":  {
+                                                                                   "assignments":  [
+                                                                                                       {
+                                                                                                           "id":  "a1",
+                                                                                                           "name":  "phone",
+                                                                                                           "type":  "string",
+                                                                                                           "value":  "={{ $json.body.whatsappInboundMessage.from }}"
+                                                                                                       },
+                                                                                                       {
+                                                                                                           "id":  "a2",
+                                                                                                           "name":  "name",
+                                                                                                           "type":  "string",
+                                                                                                           "value":  "={{ $json.body.whatsappInboundMessage.customerProfile.name || \u0027Cliente\u0027 }}"
+                                                                                                       },
+                                                                                                       {
+                                                                                                           "id":  "a3",
+                                                                                                           "name":  "msg_body",
+                                                                                                           "type":  "string",
+                                                                                                           "value":  "={{ ($json.body.whatsappInboundMessage.text?.body || $json.body.whatsappInboundMessage.interactive?.button_reply?.title || $json.body.whatsappInboundMessage.interactive?.button_reply?.id || \u0027\u0027).trim() }}"
+                                                                                                       },
+                                                                                                       {
+                                                                                                           "id":  "a4",
+                                                                                                           "name":  "bot_phone",
+                                                                                                           "type":  "string",
+                                                                                                           "value":  "={{ $json.body.whatsappInboundMessage.to }}"
+                                                                                                       }
+                                                                                                   ]
+                                                                               },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "4ffe2be1-7ce4-4c96-98ff-040bc134db06",
+                                            "name":  "Contexto Mensaje",
+                                            "type":  "n8n-nodes-base.set",
+                                            "typeVersion":  3.4,
+                                            "position":  [
+                                                             -896,
+                                                             48
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "operation":  "executeQuery",
+                                                               "query":  "SELECT * FROM public.users WHERE phone = \u0027{{ $json.phone }}\u0027;",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "312c1575-8743-4f6c-8974-555917d01546",
+                                            "name":  "Consultar Usuario",
+                                            "type":  "n8n-nodes-base.postgres",
+                                            "typeVersion":  2.2,
+                                            "position":  [
+                                                             -704,
+                                                             48
+                                                         ],
+                                            "credentials":  {
+                                                                "postgres":  {
+                                                                                 "id":  "CsD6I7qpB4gzoBzS",
+                                                                                 "name":  "Postgres account"
+                                                                             }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "jsCode":  "const user = $input.all()[0]?.json;\nconst context = $(\u0027Contexto Mensaje\u0027).first().json;\n\nconst msg = (context.msg_body || \"\").trim().toLowerCase();\nlet intent = \"menu\";\n\nif (msg === \"recarga\" || msg === \"recargar\") {\n  intent = \"recarga\";\n} else if (msg.includes(\"saldo\")) {\n  intent = \"saldo\";\n} else if (/^\\d+$/.test(msg) \u0026\u0026 msg.length \u003e= 4) {\n  intent = \"reference\";\n} else {\n  intent = \"menu\";\n}\n\nreturn [{\n  json: {\n    phone: context.phone,\n    name: context.name,\n    msg_body: context.msg_body,\n    bot_phone: context.bot_phone,\n    user_exists: !!user?.phone,\n    balance: parseFloat(user?.balance) || 0,\n    qr_token: user?.qr_code_token || null,\n    intent: intent\n  }\n}];"
+                                                           },
+                                            "id":  "678df5e0-069a-48ca-ae31-7bc553263e93",
+                                            "name":  "Procesar Usuario",
+                                            "type":  "n8n-nodes-base.code",
+                                            "typeVersion":  2,
+                                            "position":  [
+                                                             -496,
+                                                             48
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "conditions":  {
+                                                                                  "options":  {
+                                                                                                  "caseSensitive":  false,
+                                                                                                  "leftValue":  "",
+                                                                                                  "typeValidation":  "strict",
+                                                                                                  "version":  2
+                                                                                              },
+                                                                                  "conditions":  [
+                                                                                                     {
+                                                                                                         "id":  "c1",
+                                                                                                         "leftValue":  "={{ $json.intent }}",
+                                                                                                         "operator":  {
+                                                                                                                          "operation":  "equals",
+                                                                                                                          "type":  "string"
+                                                                                                                      },
+                                                                                                         "rightValue":  "recarga"
+                                                                                                     }
+                                                                                                 ],
+                                                                                  "combinator":  "and"
+                                                                              },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "e96d59d8-7421-4ee6-ae96-c0ce2a619bf6",
+                                            "name":  "Ruta Principal",
+                                            "type":  "n8n-nodes-base.if",
+                                            "typeVersion":  2.3,
+                                            "position":  [
+                                                             -304,
+                                                             48
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "conditions":  {
+                                                                                  "options":  {
+                                                                                                  "caseSensitive":  true,
+                                                                                                  "leftValue":  "",
+                                                                                                  "typeValidation":  "strict",
+                                                                                                  "version":  2
+                                                                                              },
+                                                                                  "conditions":  [
+                                                                                                     {
+                                                                                                         "id":  "c1",
+                                                                                                         "leftValue":  "={{ $json.user_exists }}",
+                                                                                                         "operator":  {
+                                                                                                                          "operation":  "true",
+                                                                                                                          "type":  "boolean"
+                                                                                                                      }
+                                                                                                     }
+                                                                                                 ],
+                                                                                  "combinator":  "and"
+                                                                              },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "131e7416-de93-492d-9df5-99aa34e70edd",
+                                            "name":  "¿Usuario Registrado?",
+                                            "type":  "n8n-nodes-base.if",
+                                            "typeVersion":  2.3,
+                                            "position":  [
+                                                             -96,
+                                                             -64
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027¡Hola \u0027 + $json.name + \u0027! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de \u0027 + $json.balance + \u0027 Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos el código de referencia en este chat.\u0027\n  }\n} }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "9f8ec850-3db9-4ba0-a1e1-07d87165ae31",
+                                            "name":  "Info Usuario Registrado",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             128,
+                                                             -160
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga.\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza un Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto de recarga es libre (tú decides cuánto transferir). Una vez que completes el pago, regresa a este chat y envíanos el *Código de Referencia* de tu pago para activarte el saldo.\u0027\n  }\n} }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "c9832f17-d4ea-4bd8-bd82-4bb88141dd02",
+                                            "name":  "Bienvenida y Pago",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             128,
+                                                             32
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "jsCode":  "const item = $input.item.json;\nconst ref = item.msg_body.toUpperCase().trim();\n\nreturn {\n  ...item,\n  ref_code: ref\n};"
+                                                           },
+                                            "id":  "336e97df-20d7-49df-a101-db80e10dcfe6",
+                                            "name":  "Limpiar Referencia",
+                                            "type":  "n8n-nodes-base.code",
+                                            "typeVersion":  2,
+                                            "position":  [
+                                                             -96,
+                                                             240
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.pabilo.app/userbankpayment/6a2abef29d413e3d6be7ea1c/betaserio",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           },
+                                                                                                           {
+                                                                                                               "name":  "appKey",
+                                                                                                               "value":  "58994e2b-da90-4115-a6b4-d9b6a2199aa4"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ { bank_reference: $json.ref_code } }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "5087a77a-4558-4ae9-bc1e-f5ec8cbbfe7b",
+                                            "name":  "Verificar Pago Pabilo",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             112,
+                                                             240
+                                                         ],
+                                            "onError":  "continueRegularOutput"
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "jsCode":  "const item = $input.item.json;\nconst responseBody = item.responseBody || item;\nconst errorObj = item.error;\n\nconst inputData = $(\u0027Limpiar Referencia\u0027).first().json;\n\nlet is_valid = false;\nlet amount = 0.00;\nlet error_msg = \"\";\n\nlet bodyObj = {};\nif (typeof responseBody === \u0027string\u0027) {\n  try {\n    bodyObj = JSON.parse(responseBody);\n  } catch (e) {\n    bodyObj = {};\n  }\n} else {\n  bodyObj = responseBody || {};\n}\n\nconst errCode = bodyObj.error || \"\";\nconst rawMsg = bodyObj.message || errorObj?.message || \"\";\n\nconst payment = bodyObj.data?.user_bank_payment || bodyObj.user_bank_payment;\n\nif (!errorObj \u0026\u0026 payment) {\n  const status = payment.status;\n  if (status === \u0027verified\u0027 || status === \u0027paid\u0027) {\n    is_valid = true;\n    amount = parseFloat(payment.amount) || 0.00;\n  } else {\n    error_msg = \"El pago no está en estado verificado o pagado (estado actual: \" + status + \").\";\n  }\n} else {\n  if (errCode === \u0027PAYMENT_NOT_FOUND\u0027 || rawMsg.includes(\u0027payment not found\u0027) || rawMsg.includes(\u0027PAYMENT_NOT_FOUND\u0027)) {\n    error_msg = \"No encontramos ningún Pago Móvil registrado con ese número de referencia en nuestro banco. Por favor verifica los datos e inténtalo de nuevo.\";\n  } else if (errCode === \u0027PAYMENT_AMOUNT_NOT_VALID\u0027 || rawMsg.includes(\u0027payment amount not valid\u0027)) {\n    error_msg = \"El monto del pago verificado no es válido.\";\n  } else if (rawMsg) {\n    error_msg = rawMsg;\n  } else {\n    error_msg = \"La referencia no se pudo verificar en este momento. Inténtalo de nuevo más tarde.\";\n  }\n}\n\nreturn {\n  phone: inputData.phone,\n  name: inputData.name,\n  msg_body: inputData.msg_body,\n  bot_phone: inputData.bot_phone,\n  user_exists: inputData.user_exists,\n  balance: inputData.balance,\n  qr_token: inputData.qr_token,\n  ref_code: inputData.ref_code,\n  is_valid_ref: is_valid,\n  payment_amount: amount,\n  error_msg: error_msg\n};"
+                                                           },
+                                            "id":  "b204500d-c280-44c8-85de-4ec8c3bfd780",
+                                            "name":  "Evaluar Pago Pabilo",
+                                            "type":  "n8n-nodes-base.code",
+                                            "typeVersion":  2,
+                                            "position":  [
+                                                             304,
+                                                             240
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "conditions":  {
+                                                                                  "options":  {
+                                                                                                  "caseSensitive":  true,
+                                                                                                  "leftValue":  "",
+                                                                                                  "typeValidation":  "strict",
+                                                                                                  "version":  2
+                                                                                              },
+                                                                                  "conditions":  [
+                                                                                                     {
+                                                                                                         "id":  "c1",
+                                                                                                         "leftValue":  "={{ $json.is_valid_ref }}",
+                                                                                                         "operator":  {
+                                                                                                                          "operation":  "true",
+                                                                                                                          "type":  "boolean"
+                                                                                                                      }
+                                                                                                     }
+                                                                                                 ],
+                                                                                  "combinator":  "and"
+                                                                              },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "02a2b5c0-98b6-4b1c-a97b-4d5620038d73",
+                                            "name":  "¿Referencia Válida?",
+                                            "type":  "n8n-nodes-base.if",
+                                            "typeVersion":  2.3,
+                                            "position":  [
+                                                             512,
+                                                             240
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027❌ El código de referencia (*\u0027 + $json.msg_body + \u0027*) no se pudo verificar.\\n\\nMotivo: \u0027 + $json.error_msg + \u0027\\n\\nSi no has pagado, puedes realizar tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre.\u0027\n  }\n} }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "1ae607a0-b558-4746-b6a8-fc824a4506cf",
+                                            "name":  "Mensaje Referencia Inválida",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             704,
+                                                             352
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "operation":  "executeQuery",
+                                                               "query":  "WITH inserted_payment AS (\n  INSERT INTO public.payments (phone, payment_reference, amount) \n  VALUES (\n    \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}\u0027, \n    \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.ref_code }}\u0027, \n    {{ $(\"Evaluar Pago Pabilo\").first().json.payment_amount }}\n  )\n  ON CONFLICT (payment_reference) DO NOTHING\n  RETURNING id\n),\nupdated_user AS (\n  INSERT INTO public.users (phone, first_name, last_name, balance)\n  SELECT \n    \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}\u0027, \n    \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.name }}\u0027, \n    \u0027\u0027, \n    {{ $(\"Evaluar Pago Pabilo\").first().json.payment_amount }}\n  WHERE EXISTS (SELECT 1 FROM inserted_payment)\n  ON CONFLICT (phone) \n  DO UPDATE SET balance = users.balance + EXCLUDED.balance, updated_at = CURRENT_TIMESTAMP\n  RETURNING qr_code_token, balance\n)\nSELECT \n  COALESCE(\n    (SELECT qr_code_token FROM updated_user),\n    (SELECT qr_code_token FROM public.users WHERE phone = \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}\u0027)\n  ) AS qr_code_token,\n  COALESCE(\n    (SELECT balance FROM updated_user),\n    (SELECT balance FROM public.users WHERE phone = \u0027{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}\u0027)\n  ) AS balance,\n  EXISTS (SELECT 1 FROM inserted_payment) AS payment_inserted;",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "232e1d4b-e076-4582-8482-330fb25fee7e",
+                                            "name":  "Registrar Pago y Saldo",
+                                            "type":  "n8n-nodes-base.postgres",
+                                            "typeVersion":  2.2,
+                                            "position":  [
+                                                             704,
+                                                             144
+                                                         ],
+                                            "credentials":  {
+                                                                "postgres":  {
+                                                                                 "id":  "CsD6I7qpB4gzoBzS",
+                                                                                 "name":  "Postgres account"
+                                                                             }
+                                                            },
+                                            "onError":  "continueRegularOutput"
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "jsCode":  "const pgResult = $input.all();\nconst context = $(\u0027Evaluar Pago Pabilo\u0027).first().json;\n\nif (pgResult.length === 0 || !pgResult[0].json.payment_inserted) {\n  return [{\n    json: {\n      ...context,\n      success: false,\n      error_msg: \u0027La referencia de pago ya ha sido utilizada anteriormente en este sistema.\u0027\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...context,\n    success: true,\n    qr_code_token: pgResult[0].json.qr_code_token,\n    balance: parseFloat(pgResult[0].json.balance)\n  }\n}];"
+                                                           },
+                                            "id":  "2e325c79-c01b-4df8-b4c3-f8051871a1ba",
+                                            "name":  "Evaluar Resultado DB",
+                                            "type":  "n8n-nodes-base.code",
+                                            "typeVersion":  2,
+                                            "position":  [
+                                                             912,
+                                                             144
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "conditions":  {
+                                                                                  "options":  {
+                                                                                                  "caseSensitive":  true,
+                                                                                                  "leftValue":  "",
+                                                                                                  "typeValidation":  "strict",
+                                                                                                  "version":  2
+                                                                                              },
+                                                                                  "conditions":  [
+                                                                                                     {
+                                                                                                         "id":  "c1",
+                                                                                                         "leftValue":  "={{ $json.success }}",
+                                                                                                         "operator":  {
+                                                                                                                          "operation":  "true",
+                                                                                                                          "type":  "boolean"
+                                                                                                                      }
+                                                                                                     }
+                                                                                                 ],
+                                                                                  "combinator":  "and"
+                                                                              },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "443a605a-ea49-4a1e-9b19-f70c2c86586c",
+                                            "name":  "¿DB Registrada?",
+                                            "type":  "n8n-nodes-base.if",
+                                            "typeVersion":  2.3,
+                                            "position":  [
+                                                             1104,
+                                                             144
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ { from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to, to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from, type: \u0027text\u0027, text: { body: \u0027❌ Hubo un problema al registrar tu pago: \u0027 + $json.error_msg + \u0027\\n\\nVerifica que la referencia no haya sido utilizada antes.\u0027 } } }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "23d1ba71-4ad9-4611-a4da-018154fe7110",
+                                            "name":  "Mensaje Error Registro",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             1312,
+                                                             240
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ { from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to, to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from, type: \u0027image\u0027, image: { link: \u0027https://api.qrserver.com/v1/create-qr-code/?size=300x300\u0026data=RECARGA-\u0027 + Math.round($json.balance), caption: \u0027¡Recarga Exitosa! 🎉\\n\\nSe han abonado \u0027 + $json.payment_amount + \u0027 Bs a tu cuenta.\\nTu saldo actual es de \u0027 + $json.balance + \u0027 Bs.\\n\\nPresenta este código QR en el lector de la máquina para dispensar tu agua.\u0027 } } }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "ebd4cfd7-bb65-4390-afeb-dc2908473da0",
+                                            "name":  "Enviar QR Exitoso",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             1312,
+                                                             48
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "conditions":  {
+                                                                                  "options":  {
+                                                                                                  "caseSensitive":  false,
+                                                                                                  "leftValue":  "",
+                                                                                                  "typeValidation":  "strict",
+                                                                                                  "version":  2
+                                                                                              },
+                                                                                  "conditions":  [
+                                                                                                     {
+                                                                                                         "id":  "c1",
+                                                                                                         "leftValue":  "={{ $json.intent }}",
+                                                                                                         "operator":  {
+                                                                                                                          "operation":  "equals",
+                                                                                                                          "type":  "string"
+                                                                                                                      },
+                                                                                                         "rightValue":  "saldo"
+                                                                                                     }
+                                                                                                 ],
+                                                                                  "combinator":  "and"
+                                                                              },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "73d35161-183f-4ca3-828e-31b1056cdd16",
+                                            "name":  "¿Consulta de Saldo?",
+                                            "type":  "n8n-nodes-base.if",
+                                            "typeVersion":  2.3,
+                                            "position":  [
+                                                             -96,
+                                                             128
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "conditions":  {
+                                                                                  "options":  {
+                                                                                                  "caseSensitive":  true,
+                                                                                                  "leftValue":  "",
+                                                                                                  "typeValidation":  "strict",
+                                                                                                  "version":  2
+                                                                                              },
+                                                                                  "conditions":  [
+                                                                                                     {
+                                                                                                         "id":  "c1",
+                                                                                                         "leftValue":  "={{ $json.user_exists }}",
+                                                                                                         "operator":  {
+                                                                                                                          "operation":  "true",
+                                                                                                                          "type":  "boolean"
+                                                                                                                      }
+                                                                                                     }
+                                                                                                 ],
+                                                                                  "combinator":  "and"
+                                                                              },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "37f30caf-c681-4f47-98ce-14247f05c411",
+                                            "name":  "¿Usuario Existe para Saldo?",
+                                            "type":  "n8n-nodes-base.if",
+                                            "typeVersion":  2.3,
+                                            "position":  [
+                                                             112,
+                                                             128
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ { from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to, to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from, type: \u0027image\u0027, image: { link: \u0027https://api.qrserver.com/v1/create-qr-code/?size=300x300\u0026data=RECARGA-\u0027 + Math.round($json.balance), caption: \u0027Hola \u0027 + ($json.name || \u0027Cliente\u0027) + \u0027, tu saldo actual es de \u0027 + $json.balance + \u0027 Bs.\\n\\nPresenta este código QR en el lector de la máquina para dispensar tu agua.\u0027 } } }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "fc18582b-e553-428e-bd82-950f748a2762",
+                                            "name":  "Enviar QR y Saldo",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             336,
+                                                             48
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027¡Hola! Soy Ali 👽, tu asistente de Alien Water.\\n\\nNo te encuentras registrado todavía. Para registrarte y cargar saldo en tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre. Una vez realizado, envíanos el *Código de Referencia* por este chat para activarte el saldo.\u0027\n  }\n} }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "146b763f-7f53-4870-b89c-6d3d37037cc9",
+                                            "name":  "Saldo Usuario No Registrado",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             336,
+                                                             208
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "conditions":  {
+                                                                                  "options":  {
+                                                                                                  "caseSensitive":  true,
+                                                                                                  "leftValue":  "",
+                                                                                                  "typeValidation":  "strict",
+                                                                                                  "version":  2
+                                                                                              },
+                                                                                  "conditions":  [
+                                                                                                     {
+                                                                                                         "id":  "c1",
+                                                                                                         "leftValue":  "={{ $json.intent }}",
+                                                                                                         "operator":  {
+                                                                                                                          "operation":  "equals",
+                                                                                                                          "type":  "string"
+                                                                                                                      },
+                                                                                                         "rightValue":  "reference"
+                                                                                                     }
+                                                                                                 ],
+                                                                                  "combinator":  "and"
+                                                                              },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "6c957385-f675-4546-a015-53a9f2eb23f2",
+                                            "name":  "¿Es Intención Referencia?",
+                                            "type":  "n8n-nodes-base.if",
+                                            "typeVersion":  2.3,
+                                            "position":  [
+                                                             -96,
+                                                             304
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "conditions":  {
+                                                                                  "options":  {
+                                                                                                  "caseSensitive":  true,
+                                                                                                  "leftValue":  "",
+                                                                                                  "typeValidation":  "strict",
+                                                                                                  "version":  2
+                                                                                              },
+                                                                                  "conditions":  [
+                                                                                                     {
+                                                                                                         "id":  "c1",
+                                                                                                         "leftValue":  "={{ $json.user_exists }}",
+                                                                                                         "operator":  {
+                                                                                                                          "operation":  "true",
+                                                                                                                          "type":  "boolean"
+                                                                                                                      }
+                                                                                                     }
+                                                                                                 ],
+                                                                                  "combinator":  "and"
+                                                                              },
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "cd5d69cf-f2e3-4f9e-9c30-4bd43ed6ebfa",
+                                            "name":  "¿Menú Usuario Existe?",
+                                            "type":  "n8n-nodes-base.if",
+                                            "typeVersion":  2.3,
+                                            "position":  [
+                                                             112,
+                                                             432
+                                                         ]
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027interactive\u0027,\n  interactive: {\n    type: \u0027button\u0027,\n    body: {\n      text: \u0027¡Hola \u0027 + $json.name + \u0027! Soy Ali 👽, tu asistente de Alien Water. ¿En qué te puedo ayudar hoy?\\n\\nSelecciona una de las siguientes opciones o presiona uno de los botones:\u0027\n    },\n    action: {\n      buttons: [\n        { type: \u0027reply\u0027, reply: { id: \u0027recarga\u0027, title: \u0027Recargar\u0027 } },\n        { type: \u0027reply\u0027, reply: { id: \u0027saldo\u0027, title: \u0027Consultar Saldo\u0027 } }\n      ]\n    }\n  }\n} }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "6c3ba78a-ed22-43ec-a569-30bb78197ab6",
+                                            "name":  "Menú Usuario Registrado",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             336,
+                                                             368
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        },
+                                        {
+                                            "parameters":  {
+                                                               "method":  "POST",
+                                                               "url":  "https://api.ycloud.com/v2/whatsapp/messages",
+                                                               "authentication":  "genericCredentialType",
+                                                               "genericAuthType":  "httpHeaderAuth",
+                                                               "sendHeaders":  true,
+                                                               "headerParameters":  {
+                                                                                        "parameters":  [
+                                                                                                           {
+                                                                                                               "name":  "Content-Type",
+                                                                                                               "value":  "application/json"
+                                                                                                           }
+                                                                                                       ]
+                                                                                    },
+                                                               "sendBody":  true,
+                                                               "specifyBody":  "json",
+                                                               "jsonBody":  "={{ {\n  from: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.to,\n  to: $(\u0027Webhook (yCloud)\u0027).first().json.body.whatsappInboundMessage.from,\n  type: \u0027text\u0027,\n  text: {\n    body: \u0027¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga. 💧\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza lo siguiente:\\n\\n1️⃣ Realiza tu Pago Móvil a:\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n*(El monto es libre)*\\n\\n2️⃣ Regresa a este chat y envíanos el *Código de Referencia* de tu pago.\\n\\n¡Eso es todo! El bot verificará tu pago y te enviará un código QR con tu saldo activo.\u0027\n  }\n} }}",
+                                                               "options":  {
+
+                                                                           }
+                                                           },
+                                            "id":  "a514dcfe-b7ab-48fa-b6d9-590b12bf33b2",
+                                            "name":  "Menú Usuario No Registrado",
+                                            "type":  "n8n-nodes-base.httpRequest",
+                                            "typeVersion":  4.3,
+                                            "position":  [
+                                                             336,
+                                                             480
+                                                         ],
+                                            "credentials":  {
+                                                                "httpHeaderAuth":  {
+                                                                                       "id":  "TDkDp0kZsIwYMvOj",
+                                                                                       "name":  "Ycloud Heric"
+                                                                                   }
+                                                            }
+                                        }
+                                    ],
+                          "connections":  {
+                                              "Webhook (yCloud)":  {
+                                                                       "main":  [
+                                                                                    [
+                                                                                        {
+                                                                                            "node":  "Contexto Mensaje",
+                                                                                            "type":  "main",
+                                                                                            "index":  0
+                                                                                        }
+                                                                                    ]
+                                                                                ]
+                                                                   },
+                                              "Contexto Mensaje":  {
+                                                                       "main":  [
+                                                                                    [
+                                                                                        {
+                                                                                            "node":  "Consultar Usuario",
+                                                                                            "type":  "main",
+                                                                                            "index":  0
+                                                                                        }
+                                                                                    ]
+                                                                                ]
+                                                                   },
+                                              "Consultar Usuario":  {
+                                                                        "main":  [
+                                                                                     [
+                                                                                         {
+                                                                                             "node":  "Procesar Usuario",
+                                                                                             "type":  "main",
+                                                                                             "index":  0
+                                                                                         }
+                                                                                     ]
+                                                                                 ]
+                                                                    },
+                                              "Procesar Usuario":  {
+                                                                       "main":  [
+                                                                                    [
+                                                                                        {
+                                                                                            "node":  "Ruta Principal",
+                                                                                            "type":  "main",
+                                                                                            "index":  0
+                                                                                        }
+                                                                                    ]
+                                                                                ]
+                                                                   },
+                                              "Ruta Principal":  {
+                                                                     "main":  [
+                                                                                  [
+                                                                                      {
+                                                                                          "node":  "¿Usuario Registrado?",
+                                                                                          "type":  "main",
+                                                                                          "index":  0
+                                                                                      }
+                                                                                  ],
+                                                                                  [
+                                                                                      {
+                                                                                          "node":  "¿Consulta de Saldo?",
+                                                                                          "type":  "main",
+                                                                                          "index":  0
+                                                                                      }
+                                                                                  ]
+                                                                              ]
+                                                                 },
+                                              "¿Usuario Registrado?":  {
+                                                                           "main":  [
+                                                                                        [
+                                                                                            {
+                                                                                                "node":  "Info Usuario Registrado",
+                                                                                                "type":  "main",
+                                                                                                "index":  0
+                                                                                            }
+                                                                                        ],
+                                                                                        [
+                                                                                            {
+                                                                                                "node":  "Bienvenida y Pago",
+                                                                                                "type":  "main",
+                                                                                                "index":  0
+                                                                                            }
+                                                                                        ]
+                                                                                    ]
+                                                                       },
+                                              "Limpiar Referencia":  {
+                                                                         "main":  [
+                                                                                      [
+                                                                                          {
+                                                                                              "node":  "Verificar Pago Pabilo",
+                                                                                              "type":  "main",
+                                                                                              "index":  0
+                                                                                          }
+                                                                                      ]
+                                                                                  ]
+                                                                     },
+                                              "Verificar Pago Pabilo":  {
+                                                                            "main":  [
+                                                                                         [
+                                                                                             {
+                                                                                                 "node":  "Evaluar Pago Pabilo",
+                                                                                                 "type":  "main",
+                                                                                                 "index":  0
+                                                                                             }
+                                                                                         ]
+                                                                                     ]
+                                                                        },
+                                              "Evaluar Pago Pabilo":  {
+                                                                          "main":  [
+                                                                                       [
+                                                                                           {
+                                                                                               "node":  "¿Referencia Válida?",
+                                                                                               "type":  "main",
+                                                                                               "index":  0
+                                                                                           }
+                                                                                       ]
+                                                                                   ]
+                                                                      },
+                                              "¿Referencia Válida?":  {
+                                                                          "main":  [
+                                                                                       [
+                                                                                           {
+                                                                                               "node":  "Registrar Pago y Saldo",
+                                                                                               "type":  "main",
+                                                                                               "index":  0
+                                                                                           }
+                                                                                       ],
+                                                                                       [
+                                                                                           {
+                                                                                               "node":  "Mensaje Referencia Inválida",
+                                                                                               "type":  "main",
+                                                                                               "index":  0
+                                                                                           }
+                                                                                       ]
+                                                                                   ]
+                                                                      },
+                                              "Registrar Pago y Saldo":  {
+                                                                             "main":  [
+                                                                                          [
+                                                                                              {
+                                                                                                  "node":  "Evaluar Resultado DB",
+                                                                                                  "type":  "main",
+                                                                                                  "index":  0
+                                                                                              }
+                                                                                          ]
+                                                                                      ]
+                                                                         },
+                                              "Evaluar Resultado DB":  {
+                                                                           "main":  [
+                                                                                        [
+                                                                                            {
+                                                                                                "node":  "¿DB Registrada?",
+                                                                                                "type":  "main",
+                                                                                                "index":  0
+                                                                                            }
+                                                                                        ]
+                                                                                    ]
+                                                                       },
+                                              "¿DB Registrada?":  {
+                                                                      "main":  [
+                                                                                   [
+                                                                                       {
+                                                                                           "node":  "Enviar QR Exitoso",
+                                                                                           "type":  "main",
+                                                                                           "index":  0
+                                                                                       }
+                                                                                   ],
+                                                                                   [
+                                                                                       {
+                                                                                           "node":  "Mensaje Error Registro",
+                                                                                           "type":  "main",
+                                                                                           "index":  0
+                                                                                       }
+                                                                                   ]
+                                                                               ]
+                                                                  },
+                                              "¿Consulta de Saldo?":  {
+                                                                          "main":  [
+                                                                                       [
+                                                                                           {
+                                                                                               "node":  "¿Usuario Existe para Saldo?",
+                                                                                               "type":  "main",
+                                                                                               "index":  0
+                                                                                           }
+                                                                                       ],
+                                                                                       [
+                                                                                           {
+                                                                                               "node":  "¿Es Intención Referencia?",
+                                                                                               "type":  "main",
+                                                                                               "index":  0
+                                                                                           }
+                                                                                       ]
+                                                                                   ]
+                                                                      },
+                                              "¿Usuario Existe para Saldo?":  {
+                                                                                  "main":  [
+                                                                                               [
+                                                                                                   {
+                                                                                                       "node":  "Enviar QR y Saldo",
+                                                                                                       "type":  "main",
+                                                                                                       "index":  0
+                                                                                                   }
+                                                                                               ],
+                                                                                               [
+                                                                                                   {
+                                                                                                       "node":  "Saldo Usuario No Registrado",
+                                                                                                       "type":  "main",
+                                                                                                       "index":  0
+                                                                                                   }
+                                                                                               ]
+                                                                                           ]
+                                                                              },
+                                              "¿Es Intención Referencia?":  {
+                                                                                "main":  [
+                                                                                             [
+                                                                                                 {
+                                                                                                     "node":  "Limpiar Referencia",
+                                                                                                     "type":  "main",
+                                                                                                     "index":  0
+                                                                                                 }
+                                                                                             ],
+                                                                                             [
+                                                                                                 {
+                                                                                                     "node":  "¿Menú Usuario Existe?",
+                                                                                                     "type":  "main",
+                                                                                                     "index":  0
+                                                                                                 }
+                                                                                             ]
+                                                                                         ]
+                                                                            },
+                                              "¿Menú Usuario Existe?":  {
+                                                                            "main":  [
+                                                                                         [
+                                                                                             {
+                                                                                                 "node":  "Menú Usuario Registrado",
+                                                                                                 "type":  "main",
+                                                                                                 "index":  0
+                                                                                             }
+                                                                                         ],
+                                                                                         [
+                                                                                             {
+                                                                                                 "node":  "Menú Usuario No Registrado",
+                                                                                                 "type":  "main",
+                                                                                                 "index":  0
+                                                                                             }
+                                                                                         ]
+                                                                                     ]
+                                                                        }
+                                          },
+                          "nodeGroups":  [
+
+                                         ],
+                          "authors":  "Cesar Suarez",
+                          "name":  "Version 2fbc90aa",
+                          "description":  "",
+                          "autosaved":  true,
+                          "workflowPublishHistory":  [
+                                                         {
+                                                             "createdAt":  "2026-06-17T15:45:29.040Z",
+                                                             "id":  1,
+                                                             "workflowId":  "3psmiIL4ZH7WS7xk",
+                                                             "versionId":  "2fbc90aa-b343-45c5-85bb-e587d039ffde",
+                                                             "event":  "activated",
+                                                             "userId":  "e8eaada5-a0e1-49e0-a2e3-9bf94f455276"
+                                                         },
+                                                         {
+                                                             "createdAt":  "2026-06-17T15:45:40.015Z",
+                                                             "id":  2,
+                                                             "workflowId":  "3psmiIL4ZH7WS7xk",
+                                                             "versionId":  "2fbc90aa-b343-45c5-85bb-e587d039ffde",
+                                                             "event":  "deactivated",
+                                                             "userId":  "e8eaada5-a0e1-49e0-a2e3-9bf94f455276"
+                                                         },
+                                                         {
+                                                             "createdAt":  "2026-06-17T15:45:40.171Z",
+                                                             "id":  3,
+                                                             "workflowId":  "3psmiIL4ZH7WS7xk",
+                                                             "versionId":  "2fbc90aa-b343-45c5-85bb-e587d039ffde",
+                                                             "event":  "activated",
+                                                             "userId":  "e8eaada5-a0e1-49e0-a2e3-9bf94f455276"
+                                                         }
+                                                     ]
+                      }
+}
