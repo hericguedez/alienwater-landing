@@ -277,6 +277,7 @@ function Dashboard() {
   const [sucForm, setSucForm] = useState({ codigo: '', nombre_negocio: '', direccion: '', responsable_nombre: '', responsable_apellido: '', telefono: '', email: '', ciudad: '', tipo_maquina: 'moneda' });
   const [sucSaving, setSucSaving] = useState(false);
   const [inviteLink, setInviteLink] = useState('');
+  const [sucMsg, setSucMsg] = useState('');
 
   /* ── Profile state ── */
   const [profileForm, setProfileForm] = useState({
