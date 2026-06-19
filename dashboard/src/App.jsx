@@ -943,7 +943,26 @@ function Dashboard() {
               <h2 className="section-title">Mi Perfil</h2>
             </div>
             
-            <div className="glass-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+            <div className="glass-card" style={{ maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
+              <button 
+                type="button"
+                onClick={() => setActiveTab('dispensado')}
+                style={{ 
+                  position: 'absolute', 
+                  top: '20px', 
+                  right: '20px', 
+                  background: 'none', 
+                  border: 'none', 
+                  color: 'var(--text-muted)', 
+                  fontSize: '18px', 
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  zIndex: 10
+                }}
+                title="Cerrar"
+              >
+                ✕
+              </button>
               <h3 className="table-title" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-card)', paddingBottom: '10px' }}>⚙️ Configuración de Cuenta</h3>
               
               {loadingProfile && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--accent-neon)' }}>🔄 Cargando datos del perfil...</div>}
