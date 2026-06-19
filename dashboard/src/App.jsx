@@ -274,10 +274,142 @@ function Dashboard() {
   /* ── Sucursal Modal ── */
   const [showSucModal, setShowSucModal] = useState(false);
   const [editingSuc, setEditingSuc] = useState(null);
-  const [sucForm, setSucForm] = useState({ codigo: '', nombre_negocio: '', direccion: '', responsable: '', telefono: '', email: '', ciudad: '', tipo_maquina: 'moneda' });
+  const [sucForm, setSucForm] = useState({ codigo: '', nombre_negocio: '', direccion: '', responsable_nombre: '', responsable_apellido: '', telefono: '', email: '', ciudad: '', tipo_maquina: 'moneda' });
   const [sucSaving, setSucSaving] = useState(false);
-  const [sucMsg, setSucMsg] = useState('');
   const [inviteLink, setInviteLink] = useState('');
+
+  /* ── Profile state ── */
+  const [profileForm, setProfileForm] = useState({
+    nombre: '',
+    apellido: '',
+    correo: '',
+    ciudad: '',
+    direccion: '',
+    telefono: '',
+    pm_telefono: '',
+    pm_cedula: '',
+    pm_banco: ''
+  });
+  const [loadingProfile, setLoadingProfile] = useState(false);
+  const [profileMsg, setProfileMsg] = useState('');
+  const [profileMsgType, setProfileMsgType] = useState('success');
+
+  const BANCOS_VENEZUELA = useMemo(() => [
+    { code: '0102', name: 'Banco de Venezuela S.A.' },
+    { code: '0134', name: 'Banesco Banco Universal S.A.C.A.' },
+    { code: '0105', name: 'Banco Mercantil C.A.' },
+    { code: '0108', name: 'Banco Provincial S.A. (BBVA)' },
+    { code: '0191', name: 'Banco Nacional de Crédito BNC' },
+    { code: '0114', name: 'Bancaribe C.A.' },
+    { code: '0115', name: 'Banco Exterior C.A.' },
+    { code: '0163', name: 'Banco del Tesoro C.A.' },
+    { code: '0175', name: 'Banco Bicentenario del Pueblo C.A.' },
+    { code: '0174', name: 'Banplus Banco Universal C.A.' },
+    { code: '0171', name: 'Banco Activo C.A.' },
+    { code: '0138', name: 'Banco Plaza C.A.' },
+    { code: '0128', name: 'Banco Caroní C.A.' },
+    { code: '0156', name: '100% Banco C.A.' },
+    { code: '0157', name: 'Delsur Banco Universal C.A.' },
+    { code: '0177', name: 'Banfanb Banco Universal' },
+    { code: '0169', name: 'Mi Banco C.A.' },
+    { code: '0104', name: 'Banco Venezolano de Crédito S.A.' },
+    { code: '0137', name: 'Sofitasa Banco Universal C.A.' }
+  ], []);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    setLoadingProfile(true);
+    try {
+      const { data, error } = await insforge.database
+        .from('dashboard_users')
+        .select('*')
+        .eq('id', user.user_id)
+        .limit(1);
+      if (error) throw error;
+      if (data && data.length > 0) {
+        const uInfo = data[0];
+        setProfileForm({
+          nombre: uInfo.nombre || '',
+          apellido: uInfo.apellido || '',
+          correo: uInfo.correo || '',
+          ciudad: uInfo.ciudad || '',
+          direccion: uInfo.direccion || '',
+          telefono: uInfo.telefono || '',
+          pm_telefono: uInfo.pm_telefono || '',
+          pm_cedula: uInfo.pm_cedula || '',
+          pm_banco: uInfo.pm_banco || ''
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'perfil' && user) {
+      fetchProfile();
+    }
+  }, [activeTab, user]);
+
+  const saveProfile = async (e) => {
+    e.preventDefault();
+    setProfileMsg('');
+    
+    // Validations
+    if (!profileForm.nombre.trim()) { setProfileMsg('❌ El nombre es obligatorio.'); setProfileMsgType('error'); return; }
+    if (!profileForm.apellido.trim()) { setProfileMsg('❌ El apellido es obligatorio.'); setProfileMsgType('error'); return; }
+    if (!profileForm.correo.trim()) { setProfileMsg('❌ El email es obligatorio.'); setProfileMsgType('error'); return; }
+    if (!profileForm.ciudad.trim()) { setProfileMsg('❌ La ciudad es obligatoria.'); setProfileMsgType('error'); return; }
+    if (!profileForm.direccion.trim()) { setProfileMsg('❌ La dirección es obligatoria.'); setProfileMsgType('error'); return; }
+    if (!profileForm.telefono.trim()) { setProfileMsg('❌ El teléfono es obligatorio.'); setProfileMsgType('error'); return; }
+
+    // Pago móvil validations
+    if (!profileForm.pm_telefono.trim()) { setProfileMsg('❌ El teléfono de Pago Móvil es obligatorio.'); setProfileMsgType('error'); return; }
+    if (!/^\d{11}$/.test(profileForm.pm_telefono.trim())) { setProfileMsg('❌ El teléfono de Pago Móvil debe ser de 11 dígitos numéricos sin espacios ni caracteres especiales.'); setProfileMsgType('error'); return; }
+    if (!profileForm.pm_cedula.trim()) { setProfileMsg('❌ La cédula es obligatoria.'); setProfileMsgType('error'); return; }
+    if (!/^\d+$/.test(profileForm.pm_cedula.trim())) { setProfileMsg('❌ La cédula debe ser puramente numérica.'); setProfileMsgType('error'); return; }
+    if (!profileForm.pm_banco) { setProfileMsg('❌ Debe seleccionar un banco.'); setProfileMsgType('error'); return; }
+
+    setLoadingProfile(true);
+    try {
+      const { error } = await insforge.database
+        .from('dashboard_users')
+        .update({
+          nombre: profileForm.nombre.trim(),
+          apellido: profileForm.apellido.trim(),
+          correo: profileForm.correo.trim().toLowerCase(),
+          ciudad: profileForm.ciudad.trim(),
+          direccion: profileForm.direccion.trim(),
+          telefono: profileForm.telefono.trim(),
+          pm_telefono: profileForm.pm_telefono.trim(),
+          pm_cedula: profileForm.pm_cedula.trim(),
+          pm_banco: profileForm.pm_banco
+        })
+        .eq('id', user.user_id);
+
+      if (error) throw error;
+
+      // Update session data in local state and localStorage
+      const updatedUser = {
+        ...user,
+        user_nombre: profileForm.nombre.trim(),
+        user_apellido: profileForm.apellido.trim(),
+        user_correo: profileForm.correo.trim().toLowerCase()
+      };
+      setUser(updatedUser);
+      localStorage.setItem('dashboard_session', JSON.stringify(updatedUser));
+
+      setProfileMsg('✅ Perfil y datos de Pago Móvil actualizados correctamente.');
+      setProfileMsgType('success');
+    } catch (err) {
+      setProfileMsg('❌ Error al actualizar el perfil: ' + getErrMsg(err));
+      setProfileMsgType('error');
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   /* ── Effects ── */
   useEffect(() => { document.documentElement.setAttribute('data-theme', theme); localStorage.setItem('theme', theme); }, [theme]);
@@ -321,7 +453,13 @@ function Dashboard() {
     } catch { setLoginError('Error de red.'); }
     finally { setLoadingLogin(false); }
   };
-  const handleLogout = () => { setUser(null); localStorage.removeItem('dashboard_session'); setEmail(''); setPassword(''); };
+  const handleLogout = () => {
+    localStorage.removeItem('dashboard_session');
+    setUser(null);
+    setEmail('');
+    setPassword('');
+    window.location.hash = '#/';
+  };
 
   /* ── User lookup map ── */
   const userMap = useMemo(() => {
@@ -352,6 +490,7 @@ function Dashboard() {
   };
 
   const filterBySucursal = (item) => {
+    if (!user) return false;
     if (user.user_rol === 'sucursal' && user.user_sucursal) return item.sucursal === user.user_sucursal;
     return selectedSucursal === 'Todas' || item.sucursal === selectedSucursal;
   };
@@ -370,6 +509,7 @@ function Dashboard() {
 
   /* ── Filtered Creditos ── */
   const filteredCreditos = useMemo(() => {
+    if (!user) return [];
     return creditos.filter(c => {
       if (user.user_rol === 'sucursal' && user.user_sucursal) return c.sucursal === user.user_sucursal;
       return selectedSucursal === 'Todas' || c.sucursal === selectedSucursal;
@@ -471,7 +611,17 @@ function Dashboard() {
     setSucMsg(''); setInviteLink('');
     if (suc) {
       setEditingSuc(suc);
-      setSucForm({ codigo: suc.codigo, nombre_negocio: suc.nombre_negocio || '', direccion: suc.direccion || '', responsable: suc.responsable || '', telefono: suc.telefono || '', email: suc.email || '', ciudad: suc.ciudad || '', tipo_maquina: suc.tipo_maquina || 'moneda' });
+      setSucForm({
+        codigo: suc.codigo,
+        nombre_negocio: suc.nombre_negocio || '',
+        direccion: suc.direccion || '',
+        responsable_nombre: suc.responsable_nombre || '',
+        responsable_apellido: suc.responsable_apellido || '',
+        telefono: suc.telefono || '',
+        email: suc.email || '',
+        ciudad: suc.ciudad || '',
+        tipo_maquina: suc.tipo_maquina || 'moneda'
+      });
     } else {
       setEditingSuc(null);
       // Auto-calculate next numeric code starting from 100
@@ -480,13 +630,33 @@ function Dashboard() {
         .filter(n => !isNaN(n));
       const nextCode = numericCodes.length > 0 ? Math.max(...numericCodes) + 1 : 100;
       const finalCode = Math.max(100, nextCode);
-      setSucForm({ codigo: String(finalCode), nombre_negocio: '', direccion: '', responsable: '', telefono: '', email: '', ciudad: 'Maracaibo', tipo_maquina: 'moneda' });
+      setSucForm({
+        codigo: String(finalCode),
+        nombre_negocio: '',
+        direccion: '',
+        responsable_nombre: '',
+        responsable_apellido: '',
+        telefono: '',
+        email: '',
+        ciudad: 'Maracaibo',
+        tipo_maquina: 'moneda'
+      });
     }
     setShowSucModal(true);
   };
 
   const saveSucursal = async () => {
-    setSucSaving(true); setSucMsg(''); setInviteLink('');
+    setSucMsg(''); setInviteLink('');
+    
+    // Mandatory validations
+    if (!sucForm.ciudad?.trim()) { setSucMsg('❌ La ciudad es obligatoria.'); return; }
+    if (!sucForm.direccion?.trim()) { setSucMsg('❌ La dirección es obligatoria.'); return; }
+    if (!sucForm.responsable_nombre?.trim()) { setSucMsg('❌ El nombre del responsable es obligatorio.'); return; }
+    if (!sucForm.responsable_apellido?.trim()) { setSucMsg('❌ El apellido del responsable es obligatorio.'); return; }
+    if (!sucForm.telefono?.trim()) { setSucMsg('❌ El teléfono es obligatorio.'); return; }
+    if (!sucForm.email?.trim()) { setSucMsg('❌ El email es obligatorio.'); return; }
+
+    setSucSaving(true);
     try {
       if (editingSuc) {
         // Update sucursal
@@ -507,8 +677,8 @@ function Dashboard() {
           const { error: userErr } = await insforge.database.from('dashboard_users').insert([{
             correo: sucForm.email.trim().toLowerCase(),
             contrasena: tempHash,
-            nombre: sucForm.responsable?.split(' ')[0] || 'Usuario',
-            apellido: sucForm.responsable?.split(' ').slice(1).join(' ') || '',
+            nombre: sucForm.responsable_nombre.trim(),
+            apellido: sucForm.responsable_apellido.trim(),
             sucursal: sucForm.codigo,
             rol: 'sucursal',
             setup_token: token,
@@ -522,7 +692,7 @@ function Dashboard() {
             setSucMsg('⚠️ Sucursal creada pero hubo un error al crear el usuario: ' + userErr.message);
           } else {
             // Try to send email
-            const emailSent = await sendInviteEmail(sucForm.email, sucForm.responsable || 'Responsable', setupUrl);
+            const emailSent = await sendInviteEmail(sucForm.email, `${sucForm.responsable_nombre} ${sucForm.responsable_apellido}`, setupUrl);
             setSucMsg(emailSent
               ? '✅ Sucursal creada y correo de invitación enviado a ' + sucForm.email
               : '✅ Sucursal creada. El correo no pudo enviarse, comparte el enlace manualmente:'
@@ -579,7 +749,7 @@ function Dashboard() {
   // Sorted table data
   const sortedSales = sortData(filteredSales.filter(s => searchFilter(s, salesSearch, ['id', 'metodo', 'sucursal'])), salesSort);
   const sortedRecharges = sortData(enrichedRecharges.filter(r => searchFilter(r, rechSearch, ['nombre', 'phone', 'qr_code', 'referencia'])), rechSort);
-  const filteredSucs = sucursales.filter(s => searchFilter(s, sucSearch, ['codigo', 'nombre_negocio', 'responsable', 'ciudad', 'telefono', 'email']));
+  const filteredSucs = sucursales.filter(s => searchFilter(s, sucSearch, ['codigo', 'nombre_negocio', 'responsable_nombre', 'responsable_apellido', 'ciudad', 'telefono', 'email']));
   const sortedSucs = sortData(filteredSucs, sucSort);
 
   return (
@@ -606,11 +776,12 @@ function Dashboard() {
           <button className={`tab-btn ${activeTab === 'dispensado' ? 'active' : ''}`} onClick={() => setActiveTab('dispensado')}>💧 Dispensado</button>
           <button className={`tab-btn ${activeTab === 'recargas' ? 'active' : ''}`} onClick={() => setActiveTab('recargas')}>💰 Recargas</button>
           {user.user_rol === 'admin' && <button className={`tab-btn ${activeTab === 'sucursales' ? 'active' : ''}`} onClick={() => setActiveTab('sucursales')}>🏢 Sucursales</button>}
+          <button className={`tab-btn ${activeTab === 'perfil' ? 'active' : ''}`} onClick={() => setActiveTab('perfil')}>👤 Mi Perfil</button>
           <button onClick={fetchData} className="tab-refresh-btn" title="Actualizar Datos">🔄</button>
         </div>
 
         {/* Filters (dispensado & recargas) */}
-        {activeTab !== 'sucursales' && (
+        {activeTab !== 'sucursales' && activeTab !== 'perfil' && (
           <section className="filters-bar glass-card">
             <div className="filter-group">
               <label className="form-label">Sucursal</label>
@@ -765,6 +936,95 @@ function Dashboard() {
           </>
         )}
 
+        {/* ═══════════ MI PERFIL ═══════════ */}
+        {activeTab === 'perfil' && (
+          <section className="profile-section">
+            <div className="section-header-row">
+              <h2 className="section-title">Mi Perfil</h2>
+            </div>
+            
+            <div className="glass-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+              <h3 className="table-title" style={{ marginBottom: '20px', borderBottom: '1px solid var(--border-card)', paddingBottom: '10px' }}>⚙️ Configuración de Cuenta</h3>
+              
+              {loadingProfile && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--accent-neon)' }}>🔄 Cargando datos del perfil...</div>}
+              
+              {!loadingProfile && (
+                <form onSubmit={saveProfile}>
+                  {profileMsg && (
+                    <div className={profileMsgType === 'error' ? 'error-alert' : 'success-alert'} style={{ marginBottom: '20px' }}>
+                      {profileMsg}
+                    </div>
+                  )}
+
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--accent-neon)', marginBottom: '14px' }}>Datos Personales</h4>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Nombre *</label>
+                      <input type="text" required className="form-input" value={profileForm.nombre} onChange={e => setProfileForm(p => ({ ...p, nombre: e.target.value }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Apellido *</label>
+                      <input type="text" required className="form-input" value={profileForm.apellido} onChange={e => setProfileForm(p => ({ ...p, apellido: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Correo Electrónico *</label>
+                      <input type="email" required className="form-input" value={profileForm.correo} onChange={e => setProfileForm(p => ({ ...p, correo: e.target.value }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Teléfono de Contacto *</label>
+                      <input type="text" required className="form-input" placeholder="Ej: 04141234567" value={profileForm.telefono} onChange={e => setProfileForm(p => ({ ...p, telefono: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Ciudad *</label>
+                      <input type="text" required className="form-input" placeholder="Ej: Maracaibo" value={profileForm.ciudad} onChange={e => setProfileForm(p => ({ ...p, ciudad: e.target.value }))} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Dirección *</label>
+                      <input type="text" required className="form-input" placeholder="Ej: Av. Bella Vista" value={profileForm.direccion} onChange={e => setProfileForm(p => ({ ...p, direccion: e.target.value }))} />
+                    </div>
+                  </div>
+
+                  <h4 style={{ fontSize: '15px', fontWeight: 600, color: 'var(--accent-neon)', marginTop: '24px', marginBottom: '14px' }}>Datos de Pago Móvil (Financiero)</h4>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Teléfono Pago Móvil *</label>
+                      <input type="text" required className="form-input" placeholder="Ej: 04126616502 (11 dígitos continuos)" value={profileForm.pm_telefono} onChange={e => setProfileForm(p => ({ ...p, pm_telefono: e.target.value.replace(/\D/g, '').slice(0, 11) }))} />
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Sin letras ni caracteres especiales.</span>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Cédula de Identidad *</label>
+                      <input type="text" required className="form-input" placeholder="Ej: 12345678" value={profileForm.pm_cedula} onChange={e => setProfileForm(p => ({ ...p, pm_cedula: e.target.value.replace(/\D/g, '') }))} />
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Solo números.</span>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Banco de Destino *</label>
+                    <select required className="form-input" value={profileForm.pm_banco} onChange={e => setProfileForm(p => ({ ...p, pm_banco: e.target.value }))}>
+                      <option value="">-- Selecciona un banco --</option>
+                      {BANCOS_VENEZUELA.map(b => (
+                        <option key={b.code} value={`${b.code} - ${b.name}`}>{b.name} ({b.code})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+                    <button type="submit" disabled={loadingProfile} className="btn-primary btn-sm">
+                      {loadingProfile ? 'Guardando...' : 'Actualizar Datos'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </section>
+        )}
+
         {/* ═══════════ SUCURSALES ═══════════ */}
         {activeTab === 'sucursales' && user.user_rol === 'admin' && (
           <>
@@ -799,7 +1059,7 @@ function Dashboard() {
                         <td style={{ fontWeight: 700 }}>{s.codigo}</td>
                         <td>{s.nombre_negocio || '—'}</td>
                         <td>{s.ciudad || '—'}</td>
-                        <td>{s.responsable || '—'}</td>
+                        <td>{s.responsable_nombre ? `${s.responsable_nombre} ${s.responsable_apellido || ''}` : '—'}</td>
                         <td style={{ fontSize: '13px' }}>{s.email || '—'}</td>
                         <td>{s.telefono || '—'}</td>
                         <td><span className={`method-tag ${s.tipo_maquina === 'moneda_qr' ? 'qr' : 'efectivo'}`}>{s.tipo_maquina === 'moneda_qr' ? 'Moneda + QR' : 'Moneda'}</span></td>
@@ -813,8 +1073,8 @@ function Dashboard() {
 
             {/* Sucursal Modal */}
             {showSucModal && (
-              <div className="modal-overlay" onClick={() => { if (!sucSaving) setShowSucModal(false); }}>
-                <div className="modal-card glass-card" onClick={e => e.stopPropagation()}>
+              <div className="modal-overlay">
+                <div className="modal-card glass-card">
                   <h3 className="modal-title">{editingSuc ? '✏️ Editar Sucursal' : '➕ Nueva Sucursal'}</h3>
 
                   {sucMsg && (
@@ -836,17 +1096,20 @@ function Dashboard() {
                       <div className="form-group"><label className="form-label">Nombre del Negocio</label><input className="form-input" value={sucForm.nombre_negocio} placeholder="Nombre del local" onChange={e => setSucForm(p => ({ ...p, nombre_negocio: e.target.value }))} /></div>
                     </div>
                     <div className="form-row">
-                      <div className="form-group"><label className="form-label">Ciudad</label><input className="form-input" value={sucForm.ciudad} placeholder="Maracaibo" onChange={e => setSucForm(p => ({ ...p, ciudad: e.target.value }))} /></div>
+                      <div className="form-group"><label className="form-label">Ciudad *</label><input className="form-input" value={sucForm.ciudad} placeholder="Maracaibo" onChange={e => setSucForm(p => ({ ...p, ciudad: e.target.value }))} /></div>
                       <div className="form-group"><label className="form-label">Tipo de Máquina</label><select className="form-input" value={sucForm.tipo_maquina} onChange={e => setSucForm(p => ({ ...p, tipo_maquina: e.target.value }))}><option value="moneda">Moneda</option><option value="moneda_qr">Moneda + QR</option></select></div>
                     </div>
-                    <div className="form-group"><label className="form-label">Dirección</label><input className="form-input" value={sucForm.direccion} placeholder="Av. Principal..." onChange={e => setSucForm(p => ({ ...p, direccion: e.target.value }))} /></div>
+                    <div className="form-group"><label className="form-label">Dirección *</label><input className="form-input" value={sucForm.direccion} placeholder="Av. Principal..." onChange={e => setSucForm(p => ({ ...p, direccion: e.target.value }))} /></div>
                     <div className="form-row">
-                      <div className="form-group"><label className="form-label">Responsable</label><input className="form-input" value={sucForm.responsable} placeholder="Nombre completo" onChange={e => setSucForm(p => ({ ...p, responsable: e.target.value }))} /></div>
-                      <div className="form-group"><label className="form-label">Teléfono</label><input className="form-input" value={sucForm.telefono} placeholder="04XX-XXXXXXX" onChange={e => setSucForm(p => ({ ...p, telefono: e.target.value }))} /></div>
+                      <div className="form-group"><label className="form-label">Nombre Responsable *</label><input className="form-input" value={sucForm.responsable_nombre} placeholder="Nombre" onChange={e => setSucForm(p => ({ ...p, responsable_nombre: e.target.value }))} /></div>
+                      <div className="form-group"><label className="form-label">Apellido Responsable *</label><input className="form-input" value={sucForm.responsable_apellido} placeholder="Apellido" onChange={e => setSucForm(p => ({ ...p, responsable_apellido: e.target.value }))} /></div>
                     </div>
-                    <div className="form-group">
-                      <label className="form-label">Email del Responsable {!editingSuc && <span style={{ color: 'var(--accent-neon)', fontSize: '12px' }}>(se enviará invitación al panel)</span>}</label>
-                      <input type="email" className="form-input" value={sucForm.email} placeholder="responsable@correo.com" onChange={e => setSucForm(p => ({ ...p, email: e.target.value }))} />
+                    <div className="form-row">
+                      <div className="form-group"><label className="form-label">Teléfono *</label><input className="form-input" value={sucForm.telefono} placeholder="04XX-XXXXXXX" onChange={e => setSucForm(p => ({ ...p, telefono: e.target.value }))} /></div>
+                      <div className="form-group">
+                        <label className="form-label">Email del Responsable * {!editingSuc && <span style={{ color: 'var(--accent-neon)', fontSize: '12px' }}>(invitación al panel)</span>}</label>
+                        <input type="email" className="form-input" value={sucForm.email} placeholder="responsable@correo.com" onChange={e => setSucForm(p => ({ ...p, email: e.target.value }))} />
+                      </div>
                     </div>
                   </div>
 

@@ -8,19 +8,20 @@ CREATE TABLE IF NOT EXISTS public.sucursales (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     codigo VARCHAR(10) UNIQUE NOT NULL,
     nombre_negocio VARCHAR(150),
-    direccion TEXT,
-    responsable VARCHAR(150),
-    telefono VARCHAR(30),
-    email VARCHAR(150),
-    ciudad VARCHAR(100),
+    direccion TEXT NOT NULL,
+    responsable_nombre VARCHAR(150) NOT NULL,
+    responsable_apellido VARCHAR(150) NOT NULL,
+    telefono VARCHAR(30) NOT NULL,
+    email VARCHAR(150) NOT NULL,
+    ciudad VARCHAR(100) NOT NULL,
     tipo_maquina VARCHAR(30) DEFAULT 'moneda',
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Seed sucursal existente
-INSERT INTO public.sucursales (codigo, nombre_negocio, ciudad, tipo_maquina)
-VALUES ('100', 'Sucursal Principal', 'Maracaibo', 'moneda_qr')
+INSERT INTO public.sucursales (codigo, nombre_negocio, ciudad, tipo_maquina, direccion, responsable_nombre, responsable_apellido, telefono, email)
+VALUES ('100', 'Sucursal Principal', 'Maracaibo', 'moneda_qr', 'Calle Principal', 'Admin', 'Alien', '04120000000', 'admin@alienwater.com')
 ON CONFLICT (codigo) DO NOTHING;
 
 -- 2. Agregar columna setup_token a dashboard_users (para setup y reset de contraseña)
