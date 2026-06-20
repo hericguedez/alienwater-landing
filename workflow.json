@@ -848,10 +848,10 @@
           "conditions": [
             {
               "id": "c1",
-              "leftValue": "={{ $json.active_sucursal }}",
+              "leftValue": "={{ !!$json.active_sucursal }}",
               "operator": {
-                "operation": "isNotEmpty",
-                "type": "string"
+                "operation": "true",
+                "type": "boolean"
               }
             }
           ],
