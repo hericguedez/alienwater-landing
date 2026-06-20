@@ -25,7 +25,6 @@ export default function Header({ onLoginClick, onQuoteClick, onSectionScroll, is
     { name: 'Inicio', id: 'inicio' },
     { name: 'Acerca de', id: 'acerca' },
     { name: 'Beneficios', id: 'beneficios' },
-    { name: 'Clientes', id: 'clientes' },
     { name: 'Mapa', id: 'mapa' },
     { name: 'Calculadora', id: 'calculadora' },
   ];
@@ -66,22 +65,6 @@ export default function Header({ onLoginClick, onQuoteClick, onSectionScroll, is
         {/* Action button login/portal */}
         <div className="hidden md:flex items-center space-x-4">
           <button
-            onClick={onLoginClick}
-            className={`px-4.5 py-1.5 rounded-full text-xs font-bold tracking-wider transition-all duration-200 cursor-pointer ${
-              isLoggedIn
-                ? 'bg-emerald-950 text-emerald-400 border border-emerald-800'
-                : 'border border-slate-700/80 hover:border-cyan-500/60 text-slate-300 hover:text-cyan-400'
-            }`}
-          >
-            {isLoggedIn ? (
-              <span className="flex items-center gap-1.5 font-mono">
-                <UserCheck className="w-3.5 h-3.5" /> PORTAL ACTIVO
-              </span>
-            ) : (
-              'Iniciar Sesión'
-            )}
-          </button>
-          <button
             onClick={onQuoteClick}
             className="px-4.5 py-1.5 bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 rounded-full text-xs font-black tracking-wider transition-all duration-300 hover:shadow-cyan-500/20 cursor-pointer shadow-md"
           >
@@ -115,15 +98,6 @@ export default function Header({ onLoginClick, onQuoteClick, onSectionScroll, is
             ))}
           </div>
           <div className="flex flex-col gap-3">
-            <button
-              onClick={() => {
-                setMobileMenuOpen(false);
-                onLoginClick();
-              }}
-              className="w-full text-center py-2.5 bg-slate-900 text-slate-300 rounded-xl text-xs font-bold border border-slate-800"
-            >
-              {isLoggedIn ? 'Acceder al Portal Monitoreo' : 'Iniciar Sesión'}
-            </button>
             <button
               onClick={() => {
                 setMobileMenuOpen(false);

@@ -8,7 +8,6 @@ import Header from './components/Header';
 import Hero from './components/Hero';
 import About from './components/About';
 import Benefits from './components/Benefits';
-import Clients from './components/Clients';
 import ProfitCalculator from './components/ProfitCalculator';
 import Reviews from './components/Reviews';
 import IoTTracker from './components/IoTTracker';
@@ -49,9 +48,6 @@ export default function App() {
 
         {/* BENEFITS / BENEFICIOS */}
         <Benefits />
-
-        {/* CLIENTS / RESPALDO */}
-        <Clients />
 
         {/* GOOGLE MAPS LOCATIONS SECTION */}
         <section id="mapa" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,7 +106,7 @@ export default function App() {
             <h4 className="text-sm font-bold text-slate-200 uppercase tracking-widest font-sans mb-3 select-none">Contacto Directo</h4>
             <div className="flex items-center gap-2.5">
               <MapPin className="w-4 h-4 text-cyan-400 shrink-0" />
-              <span>Dirección: Av. Francisco de Miranda, El Recreo, Caracas, Venezuela.</span>
+              <span>Dirección: Sector Santa María, calle 71 con avenida 27. Frente a la plaza la cruz. Maracaibo, Venezuela.</span>
             </div>
             <div className="flex items-center gap-2.5">
               <Phone className="w-4 h-4 text-cyan-400 shrink-0" />

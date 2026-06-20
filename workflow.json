@@ -138,7 +138,8 @@
               "leftValue": "={{ $('Procesar Usuario').first().json.user_exists }}",
               "operator": {
                 "operation": "true",
-                "type": "boolean"
+                "type": "boolean",
+                "singleValue": true
               }
             }
           ],
@@ -297,7 +298,8 @@
               "leftValue": "={{ $json.is_valid_ref }}",
               "operator": {
                 "operation": "true",
-                "type": "boolean"
+                "type": "boolean",
+                "singleValue": true
               }
             }
           ],
@@ -397,7 +399,8 @@
               "leftValue": "={{ $json.success }}",
               "operator": {
                 "operation": "true",
-                "type": "boolean"
+                "type": "boolean",
+                "singleValue": true
               }
             }
           ],
@@ -530,7 +533,8 @@
               "leftValue": "={{ $json.user_exists }}",
               "operator": {
                 "operation": "true",
-                "type": "boolean"
+                "type": "boolean",
+                "singleValue": true
               }
             }
           ],
@@ -663,7 +667,8 @@
               "leftValue": "={{ $json.user_exists }}",
               "operator": {
                 "operation": "true",
-                "type": "boolean"
+                "type": "boolean",
+                "singleValue": true
               }
             }
           ],
@@ -851,7 +856,8 @@
               "leftValue": "={{ !!$json.active_sucursal }}",
               "operator": {
                 "operation": "true",
-                "type": "boolean"
+                "type": "boolean",
+                "singleValue": true
               }
             }
           ],

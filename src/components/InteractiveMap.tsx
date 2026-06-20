@@ -5,24 +5,24 @@ import { motion, AnimatePresence } from 'motion/react';
 
 const INITIAL_CITIES: CityData[] = [
   {
-    id: 'ccs',
-    name: 'Caracas (Sede Principal)',
-    coordinates: { x: 580, y: 150 },
-    machinesCount: 38,
-    litersToday: 18240,
-    activeStatus: 'Operación Óptima',
-    statusColor: 'text-emerald-400',
-    revenueToday: 4560,
-  },
-  {
     id: 'mcbo',
-    name: 'Maracaibo',
+    name: 'Maracaibo (Sede Principal)',
     coordinates: { x: 260, y: 140 },
     machinesCount: 22,
     litersToday: 11400,
     activeStatus: 'Operación Óptima',
     statusColor: 'text-emerald-400',
     revenueToday: 2850,
+  },
+  {
+    id: 'ccs',
+    name: 'Caracas',
+    coordinates: { x: 580, y: 150 },
+    machinesCount: 38,
+    litersToday: 18240,
+    activeStatus: 'Operación Óptima',
+    statusColor: 'text-emerald-400',
+    revenueToday: 4560,
   },
   {
     id: 'val',
@@ -348,7 +348,7 @@ export default function InteractiveMap() {
                         isSelected ? 'fill-cyan-300 font-extrabold translate-y-[-2px]' : 'fill-slate-400 group-hover:fill-slate-200'
                       }`}
                     >
-                      {city.id === 'ccs' ? 'CCS 🇻🇪' : city.name.split(' (')[0]}
+                      {city.id === 'mcbo' ? 'MCBO 🇻🇪' : city.id === 'ccs' ? 'CCS' : city.name.split(' (')[0]}
                     </text>
                   </g>
                 );

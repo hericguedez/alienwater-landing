@@ -110,45 +110,14 @@ export default function AboutDispenser() {
               <div className="w-full h-24 bg-slate-950 rounded-xl border border-slate-700 p-2 flex flex-col justify-between items-center relative overflow-hidden shadow-lg shadow-cyan-500/10">
                 {/* Cyber scanner overlay */}
                 <div className="absolute inset-0 bg-linear-to-b from-transparent via-cyan-500/5 to-transparent pointer-events-none animate-pulse" />
-                <div className="flex justify-between w-full text-[10px] items-center text-cyan-400/80 font-mono">
-                  <span className="flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 animate-spin duration-3000" /> ALIENWATER IoT
-                  </span>
-                  <span className="px-1 bg-cyan-950/50 border border-cyan-800 text-cyan-300 rounded-sm">V1.9</span>
+                
+                {/* Visual glowing icon instead of text/metrics */}
+                <div className="flex-1 flex items-center justify-center">
+                  <Droplet className={`w-9 h-9 transition-all duration-500 ${dispensing ? 'text-cyan-400 animate-bounce' : 'text-slate-700 animate-pulse'}`} />
                 </div>
 
-                {/* Display metric row / Dispensing status */}
-                {!dispensing && fillLevel === 0 ? (
-                  <div className="flex justify-around items-center w-full mt-1 font-mono">
-                    <div className="text-center">
-                      <div className="text-slate-500 text-[8px] uppercase tracking-wider">Flujo</div>
-                      <div className="text-xs font-bold text-slate-100 flex items-center justify-center gap-0.5">
-                        <Droplet className="w-3.5 h-3.5 text-slate-500" />
-                        0.0L/m
-                      </div>
-                    </div>
-
-                    <div className="text-center">
-                      <div className="text-slate-500 text-[8px] uppercase tracking-wider">Pureza</div>
-                      <div className="text-xs font-bold text-cyan-400">{tds} <span className="text-[8px] text-slate-400">PPM</span></div>
-                    </div>
-
-                    <div className="text-center">
-                      <div className="text-slate-500 text-[8px] uppercase tracking-wider">Temp</div>
-                      <div className="text-xs font-bold text-emerald-400">{temp}°C</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center w-full mt-1 font-mono">
-                    <div className="text-cyan-400 text-xs font-bold animate-pulse">
-                      {fillLevel === 100 ? 'LLENADO COMPLETADO' : 'DESPACHANDO AGUA...'}
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-1">Llenando Botellón de 20L ({fillLevel}%)</div>
-                  </div>
-                )}
-
                 {/* Micro graphical readout */}
-                <div className="w-full h-1.5 bg-slate-900 rounded-full mt-1 overflow-hidden relative flex items-center">
+                <div className="w-full h-1.5 bg-slate-900 rounded-full mt-1 overflow-hidden relative flex items-center shrink-0">
                   <div
                     className="h-full bg-linear-to-r from-emerald-500 to-cyan-400 transition-all duration-300"
                     style={{ width: `${fillLevel}%` }}
@@ -234,13 +203,8 @@ export default function AboutDispenser() {
                   <line x1="43" y1="18" x2="57" y2="18" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
                   <line x1="43" y1="24" x2="57" y2="24" stroke="rgba(255,255,255,0.25)" strokeWidth="1" />
 
-                  {/* Label text */}
-                  <text x="50" y="94" textAnchor="middle" className="fill-slate-300/80 font-sans text-[11px] font-black tracking-wider pointer-events-none drop-shadow-md select-none">20L</text>
                 </svg>
               </div>
-
-              {/* Tap control action label */}
-              <span className="text-[9px] text-slate-400/80 font-mono mt-2 absolute bottom-2">UNIDAD AUTOMATIZADA CON IoT</span>
             </div>
 
             {/* Interactivity prompt */}
@@ -333,17 +297,8 @@ export default function AboutDispenser() {
         )}
       </AnimatePresence>
 
-      {/* Indicators bottom bar */}
-      {!dispensing && fillLevel === 0 ? (
-        <div className="w-full flex justify-between text-slate-500 text-[10px] font-mono border-t border-slate-900 pt-3">
-          <span className="flex items-center gap-1"><Gauge className="w-3.5 h-3.5" /> Presión: 4.8 Bar</span>
-          <span className="flex items-center gap-1"><Zap className="w-3.5 h-3.5" /> Consumo: Eficiente</span>
-        </div>
-      ) : (
-        <div className="w-full flex justify-center text-cyan-500 text-[10px] font-mono border-t border-slate-900 pt-3 animate-pulse">
-          <span>Sincronizando telemetría IoT...</span>
-        </div>
-      )}
+      {/* Visual divider spacer */}
+      <div className="w-full h-2 border-t border-slate-900 mt-2 pointer-events-none" />
     </div>
   );
 }

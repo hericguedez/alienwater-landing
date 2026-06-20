@@ -2,13 +2,22 @@ import { useState, FormEvent } from 'react';
 import { Mail, Phone, MapPin, Building2, Send, CheckCircle2, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+const WINDOW_OPTIONS = [
+  { id: 'monedero', name: 'Solo Monedero', price: 550, subscription: 0, desc: 'Sistema físico de fichas/monedas, ideal para operaciones independientes.' },
+  { id: 'qr', name: 'Solo Código QR', price: 550, subscription: 20, desc: 'Pago digital inteligente a través de código QR, incluye acceso a la nube.' },
+  { id: 'monedero_qr', name: 'Monedero + Código QR', price: 625, subscription: 20, desc: 'El sistema híbrido más popular: monedero físico y código QR digital.' },
+  { id: 'monedero_billete', name: 'Monedero + Billetes ($)', price: 750, subscription: 0, desc: 'Aceptador de billetes de dólares USD y monedero físico.' },
+  { id: 'monedero_billete_qr', name: 'Monedero + Billetes ($) + Código QR', price: 825, subscription: 20, desc: 'Equipamiento full: monedero, billetero USD y código QR digital.' },
+];
+
 export default function QuoteModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
-    city: 'Caracas',
-    capacity: 'medium', // standard (300L/day), high (600L/day), max (1000L/day)
+    city: 'Maracaibo',
+    windowType: 'monedero_qr',
+    includeFiltration: false,
     message: '',
   });
   const [submitted, setSubmitted] = useState(false);
@@ -17,8 +26,17 @@ export default function QuoteModal({ isOpen, onClose }: { isOpen: boolean; onClo
     e.preventDefault();
     setSubmitted(true);
     
+    const selectedWindow = WINDOW_OPTIONS.find(opt => opt.id === formData.windowType) || WINDOW_OPTIONS[0];
+    const filtrationText = formData.includeFiltration ? 'Sí (+$749 USD)' : 'No (ya tengo sistema)';
+    
     // Generate prefilled WhatsApp message
-    const messageText = `Hola Alienwater, mi nombre es ${formData.name}. Estoy interesado en una cotización para la ciudad de ${formData.city} con capacidad ${formData.capacity.toUpperCase()}. Mi correo es ${formData.email} y mi teléfono es ${formData.phone}.${formData.message ? ' Mensaje adicional: ' + formData.message : ''}`;
+    const messageText = `Hola Alienwater, mi nombre es ${formData.name}. Estoy interesado en una cotización para la ciudad de ${formData.city}.\n\n` +
+      `- Ventana: ${selectedWindow.name} ($${selectedWindow.price} USD${selectedWindow.subscription ? ' + $' + selectedWindow.subscription + '/mes' : ''})\n` +
+      `- Sistema de Filtración: ${filtrationText}\n` +
+      `- Correo: ${formData.email}\n` +
+      `- Teléfono: ${formData.phone}\n` +
+      `${formData.message ? '- Mensaje adicional: ' + formData.message : ''}`;
+      
     const waUrl = `https://wa.me/584141666380?text=${encodeURIComponent(messageText)}`;
     
     // Redirect to WhatsApp after a brief delay
@@ -132,46 +150,48 @@ export default function QuoteModal({ isOpen, onClose }: { isOpen: boolean; onClo
                 </div>
               </div>
 
-              {/* Selector de capacidad */}
-              <div className="space-y-2">
-                <label className="text-[11px] text-slate-400 uppercase tracking-wider font-bold block">Capacidad del Equipo Requerida</label>
-                <div className="grid grid-cols-3 gap-3">
-                  <div
-                    onClick={() => setFormData({ ...formData, capacity: 'medium' })}
-                    className={`cursor-pointer border p-3 rounded-xl transition-all duration-200 text-center ${
-                      formData.capacity === 'medium'
-                        ? 'bg-cyan-950/40 border-cyan-500 text-cyan-300'
-                        : 'bg-slate-950 border-slate-850 text-slate-400 hover:border-slate-800'
-                    }`}
+              {/* Selector de Ventana */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] text-slate-400 uppercase tracking-wider font-bold block">
+                  Tipo de Ventana de Despacho
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-2.5 text-slate-500"><Building2 className="w-4 h-4" /></span>
+                  <select
+                    value={formData.windowType}
+                    onChange={(e) => setFormData({ ...formData, windowType: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl py-2 px-3 pl-9 text-xs focus:border-cyan-500 focus:outline-hidden text-slate-250 appearance-none font-sans"
                   >
-                    <span className="block font-bold text-xs">Standard</span>
-                    <span className="text-[10px] block mt-1 font-mono">350L / Día</span>
-                  </div>
-
-                  <div
-                    onClick={() => setFormData({ ...formData, capacity: 'high' })}
-                    className={`cursor-pointer border p-3 rounded-xl transition-all duration-200 text-center ${
-                      formData.capacity === 'high'
-                        ? 'bg-cyan-950/40 border-cyan-500 text-cyan-300'
-                        : 'bg-slate-950 border-slate-850 text-slate-400 hover:border-slate-800'
-                    }`}
-                  >
-                    <span className="block font-bold text-xs">Premium</span>
-                    <span className="text-[10px] block mt-1 font-mono">600L / Día</span>
-                  </div>
-
-                  <div
-                    onClick={() => setFormData({ ...formData, capacity: 'max' })}
-                    className={`cursor-pointer border p-3 rounded-xl transition-all duration-200 text-center ${
-                      formData.capacity === 'max'
-                        ? 'bg-cyan-950/40 border-cyan-500 text-cyan-300'
-                        : 'bg-slate-950 border-slate-850 text-slate-400 hover:border-slate-800'
-                    }`}
-                  >
-                    <span className="block font-bold text-xs">Maxi-IoT</span>
-                    <span className="text-[10px] block mt-1 font-mono">1000L / Día</span>
-                  </div>
+                    {WINDOW_OPTIONS.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.name} — ${opt.price} USD {opt.subscription > 0 ? `(+ $${opt.subscription}/mes)` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+              </div>
+
+              {/* Sistema de filtrado checkbox */}
+              <div className="bg-slate-950/50 border border-slate-850 rounded-xl p-3 flex items-center justify-between gap-3">
+                <div className="flex-1">
+                  <span className="text-[11px] font-bold text-slate-200 block uppercase tracking-wide">
+                    ¿Incluir Kit de Filtración Profesional?
+                  </span>
+                  <p className="text-[10px] text-slate-400 mt-0.5">
+                    Filtro desbarrador, doble pulidor, lámpara UV 2 GPM, bomba de 1hp con presscontrol y tanque de 500L (+$749 USD).
+                  </p>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={formData.includeFiltration}
+                  onChange={(e) => setFormData({ ...formData, includeFiltration: e.target.checked })}
+                  className="w-4.5 h-4.5 accent-cyan-500 cursor-pointer rounded-sm bg-slate-950 border-slate-800"
+                />
+              </div>
+
+              {/* Nota sobre capacidad de producción */}
+              <div className="text-[10px] text-slate-400 italic bg-cyan-950/10 border border-cyan-900/30 p-2.5 rounded-lg font-sans">
+                * Nota: Todas las ventanas están fabricadas para producir 20 litros por minuto (1 botellón por minuto), incluyendo el proceso automático de lavado y llenado.
               </div>
 
               {/* Message */}
@@ -221,8 +241,15 @@ export default function QuoteModal({ isOpen, onClose }: { isOpen: boolean; onClo
             </div>
 
             <div className="bg-slate-950/80 p-4 rounded-xl border border-slate-850 text-left font-mono text-[11px] space-y-1.5 text-slate-400">
-              <div><span className="text-slate-500">Capacidad:</span> {formData.capacity.toUpperCase()} Cap.</div>
-              <div><span className="text-slate-500">Destinatario:</span> {formData.email}</div>
+              <div>
+                <span className="text-slate-500">Ventana:</span>{' '}
+                {WINDOW_OPTIONS.find(opt => opt.id === formData.windowType)?.name || ''}
+              </div>
+              <div>
+                <span className="text-slate-500">Filtrado:</span>{' '}
+                {formData.includeFiltration ? 'Sí (+$749 USD)' : 'No'}
+              </div>
+              <div><span className="text-slate-500">Ciudad:</span> {formData.city}</div>
               <div><span className="text-slate-500">Teléfono:</span> {formData.phone}</div>
               <div><span className="text-slate-500">Estatus:</span> Redirigiendo a Asesor Comercial</div>
             </div>

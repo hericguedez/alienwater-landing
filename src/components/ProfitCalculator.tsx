@@ -2,20 +2,37 @@ import { useState } from 'react';
 import { Calculator, DollarSign, ArrowRight, ShieldCheck, Download, Sparkles, ReceiptText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+const WINDOW_OPTIONS = [
+  { id: 'monedero', name: 'Solo Monedero', price: 550, subscription: 0 },
+  { id: 'qr', name: 'Solo Código QR', price: 550, subscription: 20 },
+  { id: 'monedero_qr', name: 'Monedero + Código QR', price: 625, subscription: 20 },
+  { id: 'monedero_billete', name: 'Monedero + Billetes ($)', price: 750, subscription: 0 },
+  { id: 'monedero_billete_qr', name: 'Monedero + Billetes ($) + Código QR', price: 825, subscription: 20 },
+];
+
 export default function ProfitCalculator() {
   const [machines, setMachines] = useState(2);
-  const [litersPerDay, setLitersPerDay] = useState(350);
-  const [pricePerLiter, setPricePerLiter] = useState(0.20);
-  const [opEx, setOpEx] = useState(120); // USD/month per machine (rent and power)
+  const [windowType, setWindowType] = useState('monedero_qr');
+  const [includeFiltration, setIncludeFiltration] = useState(false);
+  const [bottlesPerDay, setBottlesPerDay] = useState(20);
+  const [pricePerBottle, setPricePerBottle] = useState(1.50);
+  const [waterCostPerBottle, setWaterCostPerBottle] = useState(0.00);
+  const [otherFixedCosts, setOtherFixedCosts] = useState(50);
   const [showQuotation, setShowQuotation] = useState(false);
 
+  const selectedWindow = WINDOW_OPTIONS.find(opt => opt.id === windowType) || WINDOW_OPTIONS[0];
+
   // Machine hardware assumptions
-  const machineUnitCost = 3600; // USD per full Alienwater IoT dispense cabinet
+  const machineUnitCost = selectedWindow.price + (includeFiltration ? 749 : 0);
   const totalInvestment = machines * machineUnitCost;
 
   // Monthly revenue calculations (30 days)
-  const monthlyGrossRevenue = machines * litersPerDay * pricePerLiter * 30;
-  const monthlyOpEx = machines * opEx;
+  const monthlyGrossRevenue = machines * bottlesPerDay * pricePerBottle * 30;
+  
+  // Costos Operativos Mensuales por máquina:
+  // Costo del agua + Mantenimiento de filtros pulidores ($5 fijo) + Renta de plataforma ($20 si tiene QR) + Alquiler/Electricidad
+  const opExPerMachine = (waterCostPerBottle * bottlesPerDay * 30) + 5 + selectedWindow.subscription + otherFixedCosts;
+  const monthlyOpEx = machines * opExPerMachine;
   const monthlyNetProfit = Math.max(0, monthlyGrossRevenue - monthlyOpEx);
 
   // ROI timeline in months
@@ -42,6 +59,37 @@ export default function ProfitCalculator() {
           </div>
 
           <div className="space-y-5 bg-slate-950/40 p-5 rounded-2xl border border-slate-800/60 font-sans">
+            {/* Configuración de Equipamiento */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4 border-b border-slate-800/60">
+              <div className="space-y-2">
+                <label className="text-slate-300 font-bold text-xs uppercase tracking-wider block">Ventana de Despacho</label>
+                <select
+                  value={windowType}
+                  onChange={(e) => setWindowType(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2 px-3 text-xs focus:border-cyan-500 focus:outline-hidden text-slate-250"
+                >
+                  {WINDOW_OPTIONS.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name} (${opt.price} USD)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between bg-slate-900/60 border border-slate-800 rounded-xl p-3">
+                <div className="pr-2 text-left">
+                  <span className="text-slate-300 font-bold text-xs uppercase tracking-wider block">Sistema de Filtrado</span>
+                  <span className="text-[10px] text-slate-505 block">Kit Profesional (+$749 USD)</span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={includeFiltration}
+                  onChange={(e) => setIncludeFiltration(e.target.checked)}
+                  className="w-4.5 h-4.5 accent-cyan-500 cursor-pointer"
+                />
+              </div>
+            </div>
+
             {/* Input 1: Machines count */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs lg:text-sm">
@@ -65,72 +113,95 @@ export default function ProfitCalculator() {
               </div>
             </div>
 
-            {/* Input 2: Liters Sold daily */}
+            {/* Input 2: Bottles Sold daily */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs lg:text-sm">
-                <label className="text-slate-300 font-bold">Liters Dispensed / Day (por máquina)</label>
+                <label className="text-slate-300 font-bold">Botellones Vendidos / Día (por máquina)</label>
                 <span className="text-cyan-400 font-mono font-bold text-base bg-cyan-950/40 border border-cyan-900/55 px-2.5 py-0.5 rounded-lg">
-                  {litersPerDay} Litros
+                  {bottlesPerDay} Botellones
                 </span>
               </div>
               <input
                 type="range"
-                min="100"
-                max="1000"
-                step="50"
-                value={litersPerDay}
-                onChange={(e) => setLitersPerDay(parseInt(e.target.value))}
+                min="5"
+                max="100"
+                step="5"
+                value={bottlesPerDay}
+                onChange={(e) => setBottlesPerDay(parseInt(e.target.value))}
                 className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>100 Litros (Fluctuación baja)</span>
-                <span>1000 Litros (Capacidad máxima pico)</span>
+                <span>5 Botellones</span>
+                <span>100 Botellones</span>
               </div>
             </div>
 
-            {/* Input 3: Price per liter */}
+            {/* Input 3: Price per bottle */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs lg:text-sm">
-                <label className="text-slate-300 font-bold">Refill Price per Liter ($ USD)</label>
+                <label className="text-slate-300 font-bold">Precio de Venta por Botellón ($ USD)</label>
                 <span className="text-emerald-400 font-mono font-bold text-base bg-emerald-950/20 border border-emerald-900/40 px-2.5 py-0.5 rounded-lg">
-                  ${pricePerLiter.toFixed(2)} USD
+                  ${pricePerBottle.toFixed(2)} USD
                 </span>
               </div>
               <input
                 type="range"
-                min="0.10"
+                min="0.50"
+                max="3.00"
+                step="0.25"
+                value={pricePerBottle}
+                onChange={(e) => setPricePerBottle(parseFloat(e.target.value))}
+                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
+              />
+              <div className="flex justify-between text-[10px] text-slate-500 font-mono">
+                <span>$0.50 USD</span>
+                <span>$3.00 USD</span>
+              </div>
+            </div>
+
+            {/* Input 4: Water Cost per Bottle */}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center text-xs lg:text-sm">
+                <label className="text-slate-300 font-bold">Costo de Agua de Entrada (por botellón)</label>
+                <span className="text-amber-400 font-mono font-bold text-base bg-amber-950/20 border border-amber-900/30 px-2.5 py-0.5 rounded-lg">
+                  ${waterCostPerBottle.toFixed(2)} USD
+                </span>
+              </div>
+              <input
+                type="range"
+                min="0.00"
                 max="0.50"
                 step="0.05"
-                value={pricePerLiter}
-                onChange={(e) => setPricePerLiter(parseFloat(e.target.value))}
+                value={waterCostPerBottle}
+                onChange={(e) => setWaterCostPerBottle(parseFloat(e.target.value))}
                 className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>$0.10 USD / litro</span>
-                <span>$0.50 USD / litro</span>
+                <span>$0.00 (Pozo Propio / Libre)</span>
+                <span>$0.50 (Agua de Calle / Cisterna)</span>
               </div>
             </div>
 
-            {/* Input 4: Operating expense */}
+            {/* Input 5: Other Fixed Costs */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs lg:text-sm">
-                <label className="text-slate-300 font-bold">Costos Fijos por Máquina (Mensuales)</label>
+                <label className="text-slate-300 font-bold">Alquiler y Electricidad (Mensual por máquina)</label>
                 <span className="text-amber-400 font-mono font-bold text-base bg-amber-950/20 border border-amber-900/30 px-2.5 py-0.5 rounded-lg">
-                  ${opEx} USD
+                  ${otherFixedCosts} USD
                 </span>
               </div>
               <input
                 type="range"
-                min="50"
-                max="300"
+                min="0"
+                max="200"
                 step="10"
-                value={opEx}
-                onChange={(e) => setOpEx(parseInt(e.target.value))}
+                value={otherFixedCosts}
+                onChange={(e) => setOtherFixedCosts(parseInt(e.target.value))}
                 className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>$50 USD (Económico)</span>
-                <span>$300 USD (Renta Prime)</span>
+                <span>$0 USD</span>
+                <span>$200 USD</span>
               </div>
             </div>
           </div>
@@ -236,7 +307,7 @@ export default function ProfitCalculator() {
                     <span className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-extrabold text-sm">A</span>
                     <span className="font-sans font-extrabold text-xl tracking-tight text-blue-900">Alienwater <span className="text-cyan-500 font-light">Venezuela</span></span>
                   </div>
-                  <p className="text-[10px] text-slate-500 mt-1 font-mono">R.I.F: J-50029384-1 | Caracas, Venezuela</p>
+                  <p className="text-[10px] text-slate-500 mt-1 font-mono">R.I.F: J-50029384-1 | Maracaibo, Venezuela</p>
                 </div>
                 <div className="text-right">
                   <span className="text-xs uppercase bg-blue-100 text-blue-700 font-bold px-3 py-1 rounded-full">COTIZACIÓN INTELIGENTE</span>
@@ -267,8 +338,11 @@ export default function ProfitCalculator() {
                     <tbody className="divide-y divide-slate-100">
                       <tr>
                         <td className="py-3 px-4">
-                          <span className="font-bold text-slate-850">Gabinete Monedero Despachador Automatizado Alienwater</span>
-                          <span className="text-[10px] text-slate-500 block mt-1">Conectividad IoT, Telemetría satelital, Pantalla táctil color, dispensador dual, sistema de filtrado integrado de 5 etapas.</span>
+                          <span className="font-bold text-slate-850">Ventana Alienwater {selectedWindow.name} {includeFiltration ? '+ Kit de Filtración Profesional' : ''}</span>
+                          <span className="text-[10px] text-slate-505 block mt-1">
+                            Dispensación automatizada con conectividad IoT. {includeFiltration ? 'Incluye kit de filtrado profesional con desbarrador, doble pulidor, lámpara UV, bomba sanitaria y tanque.' : 'No incluye sistema de filtrado (cabezal de ventana estándar).'}
+                            {selectedWindow.subscription > 0 ? ' Requiere suscripción mensual de plataforma de $20 USD.' : ''}
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-center font-bold font-mono">{machines}</td>
                         <td className="py-3 px-4 text-right font-mono">${machineUnitCost.toLocaleString()}</td>
@@ -277,7 +351,7 @@ export default function ProfitCalculator() {
                       <tr>
                         <td className="py-3 px-4">
                           <span className="font-bold text-slate-850">Servicio de Instalación y Configuración IoT de Red</span>
-                          <span className="text-[10px] text-slate-500 block mt-1">Acople de filtros, calibración del caudalímetro digital, pruebas de conductividad de agua e inducción al operador.</span>
+                          <span className="text-[10px] text-slate-505 block mt-1">Acople de filtros, calibración del caudalímetro digital, pruebas de conductividad de agua e inducción al operador.</span>
                         </td>
                         <td className="py-3 px-4 text-center font-bold font-mono">{machines}</td>
                         <td className="py-3 px-4 text-right font-mono text-emerald-600">INCLUIDO</td>
@@ -288,16 +362,16 @@ export default function ProfitCalculator() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mt-4">
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left">
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold font-mono">PROYECCIÓN DE INGRESOS MENSUAL</span>
                     <span className="text-xl font-bold font-mono text-emerald-600 mt-1 block">+ ${monthlyNetProfit.toLocaleString()} USD/Mes</span>
-                    <span className="text-[10px] text-slate-450 block mt-1 font-sans">Retorno neto estimado después de descontar ${monthlyOpEx} USD de costos fijos de electricidad/agua.</span>
+                    <span className="text-[10px] text-slate-450 block mt-1 font-sans">Retorno neto estimado después de descontar ${monthlyOpEx} USD de costos fijos mensuales (agua, filtros pulidores, plataforma y otros).</span>
                   </div>
 
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left">
                     <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold font-mono">RETORNO ESTIMADO (ROI)</span>
                     <span className="text-xl font-bold font-mono text-blue-600 mt-1 block">{roiMonths} Meses de Plazo</span>
-                    <span className="text-[10px] text-slate-450 block mt-1 font-sans">Estimando flujo diario promedio de {litersPerDay} litros por máquina con precio de refill a ${pricePerLiter.toFixed(2)}.</span>
+                    <span className="text-[10px] text-slate-450 block mt-1 font-sans">Estimando ventas diarias promedio de {bottlesPerDay} botellones por máquina con precio de refill a ${pricePerBottle.toFixed(2)}.</span>
                   </div>
                 </div>
 
