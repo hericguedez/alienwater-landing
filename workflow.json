@@ -61,7 +61,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT \n  u.phone,\n  u.first_name,\n  u.last_name,\n  u.sucursal AS user_sucursal,\n  c.qr_code,\n  c.saldo,\n  c.sucursal AS cred_sucursal\nFROM public.users u\nLEFT JOIN public.creditos c ON u.phone = c.phone\nWHERE u.phone = '{{ $json.phone }}';"
+        "query": "=SELECT \n  u.phone,\n  u.first_name,\n  u.last_name,\n  u.sucursal AS user_sucursal,\n  c.qr_code,\n  c.saldo,\n  c.sucursal AS cred_sucursal,\n  s.nombre_negocio AS sucursal_nombre\nFROM public.users u\nLEFT JOIN public.creditos c ON u.phone = c.phone\nLEFT JOIN public.sucursales s ON s.codigo = COALESCE(c.sucursal, u.sucursal)\nWHERE u.phone = '{{ $json.phone }}';"
       },
       "id": "query-user",
       "name": "Consultar Usuario",
@@ -80,7 +80,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const user = $input.all()[0]?.json;\nconst context = $('Contexto Mensaje').first().json;\nconst msg = (context.msg_body || \"\").trim().toLowerCase();\n\nconst user_exists = !!user?.qr_code;\n\nlet intent = \"menu\";\nlet sucursal = null;\n\nconst sucursalMatch = msg.match(/recargar?\\s+cod(\\d+)/i);\nif (sucursalMatch) {\n  intent = \"recarga\";\n  sucursal = sucursalMatch[1];\n} else if (msg === \"recarga\" || msg === \"recargar\") {\n  // Si el usuario ya está registrado y tiene sucursal guardada, no pedirle el código de máquina\n  const has_saved_sucursal = !!(user?.cred_sucursal || user?.user_sucursal);\n  if (user_exists || has_saved_sucursal) {\n    intent = \"recarga\";\n  } else {\n    intent = \"recarga_invalida\";\n  }\n} else if (msg.includes(\"saldo\")) {\n  intent = \"saldo\";\n} else if (/^\\d+$/.test(msg) && msg.length >= 4) {\n  intent = \"reference\";\n} else {\n  intent = \"menu\";\n}\n\nconst active_sucursal = user?.cred_sucursal || user?.user_sucursal || sucursal;\n\nreturn [{\n  json: {\n    phone: context.phone,\n    name: context.name || user?.first_name || 'Cliente',\n    msg_body: context.msg_body,\n    bot_phone: context.bot_phone,\n    user_exists: user_exists,\n    user_profile_exists: !!user,\n    balance: parseInt(user?.saldo) || 0,\n    qr_token: user?.qr_code || null,\n    user_sucursal: user?.user_sucursal || null,\n    active_sucursal: active_sucursal,\n    intent: intent\n  }\n}];"
+        "jsCode": "const user = $input.all()[0]?.json;\nconst context = $('Contexto Mensaje').first().json;\nconst msg = (context.msg_body || \"\").trim().toLowerCase();\n\nconst user_exists = !!user?.qr_code;\n\nlet intent = \"menu\";\nlet sucursal = null;\n\nconst sucursalMatch = msg.match(/recargar?\\s+cod(\\d+)/i);\nif (sucursalMatch) {\n  intent = \"recarga\";\n  sucursal = sucursalMatch[1];\n} else if (/^\\d{3}$/.test(msg)) {\n  intent = \"recarga\";\n  sucursal = msg;\n} else if (msg === \"recarga\" || msg === \"recargar\") {\n  // Si el usuario ya está registrado y tiene sucursal guardada, no pedirle el código de máquina\n  const has_saved_sucursal = !!(user?.cred_sucursal || user?.user_sucursal);\n  if (user_exists || has_saved_sucursal) {\n    intent = \"recarga\";\n  } else {\n    intent = \"recarga_invalida\";\n  }\n} else if (msg.includes(\"saldo\")) {\n  intent = \"saldo\";\n} else if (/^\\d+$/.test(msg) && msg.length >= 4) {\n  const active_sucursal = user?.cred_sucursal || user?.user_sucursal || sucursal;\n  if (active_sucursal) {\n    intent = \"reference\";\n  } else { \n    intent = \"recarga_invalida\";\n  }\n} else {\n  intent = \"menu\";\n}\n\nconst active_sucursal = user?.cred_sucursal || user?.user_sucursal || sucursal;\n\nreturn [{  json: {\n    phone: context.phone,\n    name: context.name || user?.first_name || 'Cliente',\n    msg_body: context.msg_body,\n    bot_phone: context.bot_phone,\n    user_exists: user_exists,\n    user_profile_exists: !!user,\n    balance: parseInt(user?.saldo) || 0,\n    qr_token: user?.qr_code || null,\n    user_sucursal: user?.user_sucursal || null,\n    active_sucursal: active_sucursal,\n    sucursal_nombre: user?.sucursal_nombre || 'Sucursal Principal',\n    intent: intent\n  }\n}];"
       },
       "id": "process-user",
       "name": "Procesar Usuario",
@@ -171,7 +171,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola ' + $json.name + '! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos el código de referencia en este chat.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola ' + $json.name + '! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos *solo los últimos 4 dígitos del Código de Referencia* en este chat.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-registered-info",
@@ -206,7 +206,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga.\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza un Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto de recarga es libre (tú decides cuánto transferir). Una vez que completes el pago, regresa a este chat y envíanos el *Código de Referencia* de tu pago para activarte el saldo.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga.\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza un Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto de recarga es libre (tú decides cuánto transferir). Una vez que completes el pago, regresa a este chat y envíanos *solo los últimos 4 dígitos del Código de Referencia* de tu pago para activarte el saldo.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-welcome-payment",
@@ -351,7 +351,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "=SELECT qr_code_token, balance, payment_inserted \nFROM public.registrar_pago(\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}',\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.name }}',\n  '',\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.ref_code }}',\n  {{ $(\"Evaluar Pago Pabilo\").first().json.payment_amount }},\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.active_sucursal }}'\n);"
+        "query": "=SELECT \n  r.qr_code_token, \n  r.balance, \n  r.payment_inserted,\n  s.nombre_negocio AS sucursal_nombre\nFROM public.registrar_pago(\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.phone }}',\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.name }}',\n  '',\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.ref_code }}',\n  {{ $(\"Evaluar Pago Pabilo\").first().json.payment_amount }},\n  '{{ $(\"Evaluar Pago Pabilo\").first().json.active_sucursal }}'\n) r\nLEFT JOIN public.sucursales s ON s.codigo = '{{ $(\"Evaluar Pago Pabilo\").first().json.active_sucursal }}';"
       },
       "id": "db-apply-payment",
       "name": "Registrar Pago y Saldo",
@@ -371,7 +371,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pgResult = $input.all();\nconst context = $('Evaluar Pago Pabilo').first().json;\n\nif (pgResult.length === 0 || !pgResult[0].json.payment_inserted) {\n  return [{\n    json: {\n      ...context,\n      success: false,\n      error_msg: 'La referencia de pago ya ha sido utilizada anteriormente en este sistema.'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...context,\n    success: true,\n    qr_code_token: pgResult[0].json.qr_code_token,\n    balance: parseFloat(pgResult[0].json.balance)\n  }\n}];"
+        "jsCode": "const pgResult = $input.all();\nconst context = $('Evaluar Pago Pabilo').first().json;\n\nif (pgResult.length === 0 || !pgResult[0].json.payment_inserted) {\n  return [{\n    json: {\n      ...context,\n      success: false,\n      error_msg: 'La referencia de pago ya ha sido utilizada anteriormente en este sistema.'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...context,\n    success: true,\n    qr_code_token: pgResult[0].json.qr_code_token,\n    balance: parseFloat(pgResult[0].json.balance),\n    sucursal_nombre: pgResult[0].json.sucursal_nombre || 'Sucursal Principal'\n  }\n}];"
       },
       "id": "eval-db-result",
       "name": "Evaluar Resultado DB",
@@ -465,7 +465,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: '¡Recarga Exitosa! 🎉\\n\\nSe han abonado ' + $json.payment_amount + ' Bs a tu cuenta.\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina para dispensar tu agua.' } } }}",
+        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: '📍 *Sucursal:* ' + $json.sucursal_nombre + '\\n\\n¡Recarga Exitosa! 🎉\\n\\nSe han abonado ' + $json.payment_amount + ' Bs a tu cuenta.\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina de la sucursal *' + $json.sucursal_nombre + '* para dispensar tu agua.\\n\\n🔑 *Código QR:* ' + $json.qr_token } } }}",
         "options": {}
       },
       "id": "reply-success-qr",
@@ -563,7 +563,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: 'Hola ' + ($json.name || 'Cliente') + ', tu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina para dispensar tu agua.' } } }}",
+        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: '📍 *Sucursal:* ' + $json.sucursal_nombre + '\\n\\nHola ' + ($json.name || 'Cliente') + ', tu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina de la sucursal *' + $json.sucursal_nombre + '* para dispensar tu agua.\\n\\n🔑 *Código QR:* ' + $json.qr_token } } }}",
         "options": {}
       },
       "id": "reply-saldo-qr",
@@ -598,7 +598,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water.\\n\\nNo te encuentras registrado todavía. Para registrarte y cargar saldo en tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre. Una vez realizado, envíanos el *Código de Referencia* por este chat para activarte el saldo.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water.\\n\\nNo te encuentras registrado todavía. Para registrarte y cargar saldo en tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre. Una vez realizado, envíanos *solo los últimos 4 dígitos del Código de Referencia* por este chat para activarte el saldo.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-not-registered-saldo",
@@ -731,7 +731,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga. 💧\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza lo siguiente:\\n\\n1️⃣ Realiza tu Pago Móvil a:\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n*(El monto es libre)*\\n\\n2️⃣ Regresa a este chat y envíanos el *Código de Referencia* de tu pago.\\n\\n¡Eso es todo! El bot verificará tu pago y te enviará un código QR con tu saldo activo.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga. 💧\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza lo siguiente:\\n\\n1️⃣ Realiza tu Pago Móvil a:\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n*(El monto es libre)*\\n\\n2️⃣ Regresa a este chat y envíanos *solo los últimos 4 dígitos del Código de Referencia* de tu pago.\\n\\n¡Eso es todo! El bot verificará tu pago y te enviará un código QR con tu saldo activo.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-menu-unregistered",
