@@ -73,8 +73,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "CsD6I7qpB4gzoBzS",
-          "name": "Postgres account"
+          "id": "v0P1zIqEBnZddoe5",
+          "name": "InsForge Postgres Connection"
         }
       }
     },
@@ -135,7 +135,7 @@
           "conditions": [
             {
               "id": "c1",
-              "leftValue": "={{ $json.user_exists }}",
+              "leftValue": "={{ $('Procesar Usuario').first().json.user_exists }}",
               "operator": {
                 "operation": "true",
                 "type": "boolean"
@@ -171,7 +171,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola ' + $json.name + '! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos *solo los últimos 4 dígitos del Código de Referencia* en este chat.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola ' + $('Procesar Usuario').first().json.name + '! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de ' + $('Procesar Usuario').first().json.balance + ' Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos *solo los últimos 4 dígitos del Código de Referencia* en este chat.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-registered-info",
@@ -184,8 +184,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -219,8 +219,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -343,8 +343,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -363,8 +363,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "CsD6I7qpB4gzoBzS",
-          "name": "Postgres account"
+          "id": "v0P1zIqEBnZddoe5",
+          "name": "InsForge Postgres Connection"
         }
       },
       "onError": "continueRegularOutput"
@@ -443,8 +443,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -478,8 +478,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -576,8 +576,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -611,8 +611,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -709,8 +709,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -744,8 +744,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -764,8 +764,8 @@
       ],
       "credentials": {
         "postgres": {
-          "id": "CsD6I7qpB4gzoBzS",
-          "name": "Postgres account"
+          "id": "v0P1zIqEBnZddoe5",
+          "name": "InsForge Postgres Connection"
         }
       }
     },
@@ -831,8 +831,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     },
@@ -897,8 +897,8 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
-          "id": "TDkDp0kZsIwYMvOj",
-          "name": "Ycloud Heric"
+          "id": "ATwwqjiy3Sl7gsOf",
+          "name": "Ycloud-6-26"
         }
       }
     }
