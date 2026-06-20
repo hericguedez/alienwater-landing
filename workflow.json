@@ -465,7 +465,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: '📍 *Sucursal:* ' + ($json.sucursal_nombre || '').trim() + '\\n\\n¡Recarga Exitosa! 🎉\\n\\nSe han abonado ' + $json.payment_amount + ' Bs a tu cuenta.\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina de la sucursal *' + ($json.sucursal_nombre || '').trim() + '* para dispensar tu agua.\\n\\n🔑 *Código QR:* ' + $json.qr_token } } }}",
+        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: '📍 *Sucursal:* *' + ($json.sucursal_nombre || '').trim() + '* (' + $json.active_sucursal + ')' + '\\n\\n¡Recarga Exitosa! 🎉\\n\\nSe han abonado ' + $json.payment_amount + ' Bs a tu cuenta.\\nTu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina de la sucursal *' + ($json.sucursal_nombre || '').trim() + ' (' + $json.active_sucursal + ')* para dispensar tu agua.\\n\\n🔑 *Código QR:* ' + $json.qr_token } } }}",
         "options": {}
       },
       "id": "reply-success-qr",
@@ -563,7 +563,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: '📍 *Sucursal:* ' + ($json.sucursal_nombre || '').trim() + '\\n\\nHola ' + ($json.name || 'Cliente') + ', tu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina de la sucursal *' + ($json.sucursal_nombre || '').trim() + '* para dispensar tu agua.\\n\\n🔑 *Código QR:* ' + $json.qr_token } } }}",
+        "jsonBody": "={{ { from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to, to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from, type: 'image', image: { link: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&margin=20&qzone=4&data=' + $json.qr_token, caption: '📍 *Sucursal:* *' + ($json.sucursal_nombre || '').trim() + '* (' + $json.active_sucursal + ')' + '\\n\\nHola ' + ($json.name || 'Cliente') + ', tu saldo actual es de ' + $json.balance + ' Bs.\\n\\nPresenta este código QR en el lector de la máquina de la sucursal *' + ($json.sucursal_nombre || '').trim() + ' (' + $json.active_sucursal + ')* para dispensar tu agua.\\n\\n🔑 *Código QR:* ' + $json.qr_token } } }}",
         "options": {}
       },
       "id": "reply-saldo-qr",
