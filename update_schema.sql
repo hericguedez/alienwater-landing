@@ -57,3 +57,28 @@ ADD COLUMN IF NOT EXISTS telefono VARCHAR(30),
 ADD COLUMN IF NOT EXISTS pm_telefono VARCHAR(15),
 ADD COLUMN IF NOT EXISTS pm_cedula VARCHAR(20),
 ADD COLUMN IF NOT EXISTS pm_banco VARCHAR(100);
+
+
+-- 3. Trigger para asignación automática de códigos QR a nuevas sucursales
+CREATE OR REPLACE FUNCTION public.auto_allocate_qr_codes()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Asignar 1000 códigos libres de la sucursal 100 a la nueva sucursal creada
+    UPDATE public.creditos
+    SET sucursal = NEW.codigo
+    WHERE qr_code IN (
+        SELECT qr_code 
+        FROM public.creditos 
+        WHERE phone IS NULL AND sucursal = '100'
+        ORDER BY qr_code ASC
+        LIMIT 1000
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_auto_allocate_qr_codes
+AFTER INSERT ON public.sucursales
+FOR EACH ROW
+EXECUTE FUNCTION public.auto_allocate_qr_codes();
+
