@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Calculator, DollarSign, ArrowRight, ShieldCheck, Download, Sparkles, ReceiptText } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -280,12 +281,12 @@ export default function ProfitCalculator() {
 
       {/* Commercial Quotation Modal overlay */}
       <AnimatePresence>
-        {showQuotation && (
+        {showQuotation && createPortal(
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md text-slate-900"
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
@@ -321,7 +322,7 @@ export default function ProfitCalculator() {
                   Propuesta de Inversión y Retorno Automatizado
                 </h4>
                 
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed font-sans">
                   Basado en los parámetros configurados en nuestro modelador en tiempo real, presentamos la estimación oficial para la adición de sistemas expendedores de tecnología avanzada Alienwater para la distribución de agua potable purificada:
                 </p>
 
@@ -329,10 +330,10 @@ export default function ProfitCalculator() {
                   <table className="w-full text-xs text-slate-700">
                     <thead className="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
                       <tr>
-                        <th className="py-2.5 px-4 text-left">DESCRIPCIÓN DE ITEM</th>
-                        <th className="py-2.5 px-4 text-center">CANTIDAD</th>
-                        <th className="py-2.5 px-4 text-right">UNITARIO (USD)</th>
-                        <th className="py-2.5 px-4 text-right">TOTAL (USD)</th>
+                        <th className="py-2.5 px-4 text-left font-sans">DESCRIPCIÓN DE ITEM</th>
+                        <th className="py-2.5 px-4 text-center font-sans">CANTIDAD</th>
+                        <th className="py-2.5 px-4 text-right font-sans">UNITARIO (USD)</th>
+                        <th className="py-2.5 px-4 text-right font-sans">TOTAL (USD)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -376,9 +377,9 @@ export default function ProfitCalculator() {
                 </div>
 
                 {/* Technical specs of Alienwater IoT machines */}
-                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800">
-                  <span className="font-bold block">✓ Especificaciones Técnicas Incluidas en la Red:</span>
-                  <p className="text-[11px] mt-1 font-light leading-relaxed">
+                <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 text-xs text-blue-800 text-left">
+                  <span className="font-bold block font-sans">✓ Especificaciones Técnicas Incluidas en la Red:</span>
+                  <p className="text-[11px] mt-1 font-light leading-relaxed font-sans">
                     Unidades auto-suficientes que aceptan método de cobro multi-moneda (Pago Móvil automatizado con API, lector de billetes USD nacionales integrables y ficha inteligente de refill). Monitoreo de calidad de agua con sensor TDS continuo para asegurar bienestar de los clientes.
                   </p>
                 </div>
@@ -386,19 +387,20 @@ export default function ProfitCalculator() {
 
               {/* Download signature footer */}
               <div className="flex justify-between items-center border-t border-slate-200 pt-5 mt-6">
-                <div>
+                <div className="text-left">
                   <span className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Emisor de Propuesta</span>
-                  <p className="text-xs font-bold text-slate-800 mt-0.5">Asesoría Tecnológica Alienwater</p>
+                  <p className="text-xs font-bold text-slate-800 mt-0.5 font-sans">Asesoría Tecnológica Alienwater</p>
                 </div>
                 <button
                   onClick={() => alert("Simulación de Descarga: Su propuesta comercial en formato PDF ha sido generada correctamente.")}
-                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold tracking-wider flex items-center gap-1.5 transition-all duration-300 shadow-md shadow-blue-600/10"
+                  className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold tracking-wider flex items-center gap-1.5 transition-all duration-300 shadow-md shadow-blue-600/10 font-sans"
                 >
                   <Download className="w-4 h-4" /> COMPARTIR PROPUESTA
                 </button>
               </div>
             </motion.div>
-          </motion.div>
+          </motion.div>,
+          document.body
         )}
       </AnimatePresence>
     </div>
