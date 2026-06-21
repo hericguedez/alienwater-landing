@@ -172,7 +172,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola ' + $('Procesar Usuario').first().json.name + '! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de ' + $('Procesar Usuario').first().json.balance + ' Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos *solo los últimos 4 dígitos del Código de Referencia* en este chat.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola ' + $('Procesar Usuario').first().json.name + '! Soy Ali 👽, tu asistente de Alien Water. Veo que ya estás registrado.\\n\\nTu saldo actual es de ' + $('Procesar Usuario').first().json.balance + ' Bs.\\n\\nSi deseas recargar tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04141666380`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `15938489`\\n\\nEl monto es libre (tú decides cuánto transferir). Una vez realizado, envíanos *solo los últimos 4 dígitos del Código de Referencia* en este chat.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-registered-info",
@@ -207,7 +207,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga.\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza un Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto de recarga es libre (tú decides cuánto transferir). Una vez que completes el pago, regresa a este chat y envíanos *solo los últimos 4 dígitos del Código de Referencia* de tu pago para activarte el saldo.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga.\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza un Pago Móvil a:\\n\\n📱 *Teléfono:* `04141666380`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `15938489`\\n\\nEl monto de recarga es libre (tú decides cuánto transferir). Una vez que completes el pago, regresa a este chat y envíanos *solo los últimos 4 dígitos del Código de Referencia* de tu pago para activarte el saldo.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-welcome-payment",
@@ -332,7 +332,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '❌ El código de referencia (*' + $json.msg_body + '*) no se pudo verificar.\\n\\nMotivo: ' + $json.error_msg + '\\n\\nSi no has pagado, puedes realizar tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '❌ El código de referencia (*' + $json.msg_body + '*) no se pudo verificar.\\n\\nMotivo: ' + $json.error_msg + '\\n\\nSi no has pagado, puedes realizar tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04141666380`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `15938489`\\n\\nEl monto es libre.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-invalid-ref",
@@ -602,7 +602,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water.\\n\\nNo te encuentras registrado todavía. Para registrarte y cargar saldo en tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n\\nEl monto es libre. Una vez realizado, envíanos *solo los últimos 4 dígitos del Código de Referencia* por este chat para activarte el saldo.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water.\\n\\nNo te encuentras registrado todavía. Para registrarte y cargar saldo en tu cuenta, realiza tu Pago Móvil a:\\n\\n📱 *Teléfono:* `04141666380`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `15938489`\\n\\nEl monto es libre. Una vez realizado, envíanos *solo los últimos 4 dígitos del Código de Referencia* por este chat para activarte el saldo.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-not-registered-saldo",
@@ -736,7 +736,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga. 💧\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza lo siguiente:\\n\\n1️⃣ Realiza tu Pago Móvil a:\\n📱 *Teléfono:* `04127503012`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `17230258`\\n*(El monto es libre)*\\n\\n2️⃣ Regresa a este chat y envíanos *solo los últimos 4 dígitos del Código de Referencia* de tu pago.\\n\\n¡Eso es todo! El bot verificará tu pago y te enviará un código QR con tu saldo activo.'\n  }\n} }}",
+        "jsonBody": "={{ {\n  from: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.to,\n  to: $('Webhook (yCloud)').first().json.body.whatsappInboundMessage.from,\n  type: 'text',\n  text: {\n    body: '¡Hola! Soy Ali 👽, tu asistente de Alien Water. Te ayudaré con tu recarga. 💧\\n\\nPara registrarte y cargar saldo en tu cuenta, realiza lo siguiente:\\n\\n1️⃣ Realiza tu Pago Móvil a:\\n📱 *Teléfono:* `04141666380`\\n🏦 *Banco:* Banco de Venezuela (0102)\\n🪪 *Cédula:* `15938489`\\n*(El monto es libre)*\\n\\n2️⃣ Regresa a este chat y envíanos *solo los últimos 4 dígitos del Código de Referencia* de tu pago.\\n\\n¡Eso es todo! El bot verificará tu pago y te enviará un código QR con tu saldo activo.'\n  }\n} }}",
         "options": {}
       },
       "id": "reply-menu-unregistered",
