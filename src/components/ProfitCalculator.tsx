@@ -264,18 +264,9 @@ export default function ProfitCalculator() {
             </div>
           </div>
 
-          <div className="mt-6 pt-4 border-t border-slate-800 space-y-3">
-            <button
-              onClick={() => setShowQuotation(true)}
-              className="w-full py-3 bg-linear-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-slate-950 rounded-xl text-xs font-bold tracking-wider transition-all duration-300 shadow-lg shadow-cyan-500/10 hover:shadow-cyan-400/20 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <ReceiptText className="w-4.5 h-4.5" />
-              DESCARGAR PROPUESTA COMERCIAL
-            </button>
-            <p className="text-[10px] text-slate-500 text-center font-mono flex items-center justify-center gap-1">
+            <p className="text-[10px] text-slate-550 text-center font-mono mt-5 flex items-center justify-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 inline" /> Valores proyecciones con 92% rentabilidad neta promedio.
             </p>
-          </div>
         </div>
       </div>
 
