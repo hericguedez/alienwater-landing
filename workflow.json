@@ -373,7 +373,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const pgResult = $input.all();\nconst context = $('Evaluar Pago Pabilo').first().json;\n\nif (pgResult.length === 0 || !pgResult[0].json.payment_inserted) {\n  return [{\n    json: {\n      ...context,\n      success: false,\n      error_msg: 'La referencia de pago ya ha sido utilizada anteriormente en este sistema.'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...context,\n    success: true,\n    qr_code_token: pgResult[0].json.qr_code_token,\n    qr_token: pgResult[0].json.qr_code_token,\n    balance: parseFloat(pgResult[0].json.balance),\n    sucursal_nombre: (pgResult[0].json.sucursal_nombre || 'Sucursal Principal').trim()\n  }\n}];"
+        "jsCode": "const pgResult = $input.all();\nconst context = $('Evaluar Pago Pabilo').first().json;\n\nif (pgResult.length === 0) {\n  return [{\n    json: {\n      ...context,\n      success: false,\n      error_msg: 'Error interno en la base de datos al procesar la transacción. Por favor, intenta de nuevo.'\n    }\n  }];\n}\n\nif (!pgResult[0].json.payment_inserted) {\n  return [{\n    json: {\n      ...context,\n      success: false,\n      error_msg: 'La referencia de pago ya ha sido utilizada anteriormente en este sistema.'\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    ...context,\n    success: true,\n    qr_code_token: pgResult[0].json.qr_code_token,\n    qr_token: pgResult[0].json.qr_code_token,\n    balance: parseFloat(pgResult[0].json.balance),\n    sucursal_nombre: (pgResult[0].json.sucursal_nombre || 'Sucursal Principal').trim()\n  }\n}];"
       },
       "id": "eval-db-result",
       "name": "Evaluar Resultado DB",
