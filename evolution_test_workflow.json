@@ -1,0 +1,175 @@
+{
+  "name": "Prueba_Evolution_API_Saldo",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evolution_webhook",
+        "options": {}
+      },
+      "id": "webhook-trigger-evo",
+      "name": "Webhook Evolution API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.item.json.body || {};\nconst data = body.data || {};\nconst key = data.key || {};\nconst message = data.message || {};\n\nconst fromMe = key.fromMe || false;\nconst remoteJid = key.remoteJid || \"\";\nconst phone = remoteJid.split('@')[0];\n\n// Extraer texto de diferentes posibles campos del mensaje de Whatsapp\nconst text = (message.conversation || message.extendedTextMessage?.text || \"\").trim().toLowerCase();\nconst name = data.pushName || \"Cliente\";\n\nreturn {\n  phone,\n  fromMe,\n  text,\n  name,\n  remoteJid\n};"
+      },
+      "id": "process-msg-evo",
+      "name": "Procesar Mensaje",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        200,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.fromMe }}",
+              "operator": {
+                "operation": "false",
+                "type": "boolean",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.text }}",
+              "operator": {
+                "operation": "contains",
+                "type": "string"
+              },
+              "rightValue": "saldo"
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "filter-msg-evo",
+      "name": "¿Es consulta de saldo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        400,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "=SELECT saldo FROM public.creditos WHERE phone = '{{ $json.phone }}' OR phone = '+{{ $json.phone }}' OR phone LIKE '%{{ $json.phone }}' LIMIT 1;",
+        "options": {}
+      },
+      "id": "query-balance-evo",
+      "name": "Consultar Saldo DB",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.2,
+      "position": [
+        600,
+        100
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "CsD6I7qpB4gzoBzS",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://evolution.alienwatermcbo.com/message/sendText/alienwater",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "apikey",
+              "value": "alienwater_secret_key_2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  \"number\": $json.phone || $('Procesar Mensaje').first().json.phone,\n  \"options\": {\n    \"delay\": 1200,\n    \"presence\": \"composing\"\n  },\n  \"textMessage\": {\n    \"text\": \"Hola \" + $('Procesar Mensaje').first().json.name + \", tu saldo actual es de \" + ($json.saldo || 0) + \" Bs.\"\n  }\n} }}",
+        "options": {}
+      },
+      "id": "send-text-evo",
+      "name": "Responder Whatsapp",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        800,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Evolution API": {
+      "main": [
+        [
+          {
+            "node": "Procesar Mensaje",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesar Mensaje": {
+      "main": [
+        [
+          {
+            "node": "¿Es consulta de saldo?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es consulta de saldo?": {
+      "main": [
+        [
+          {
+            "node": "Consultar Saldo DB",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Consultar Saldo DB": {
+      "main": [
+        [
+          {
+            "node": "Responder Whatsapp",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {}
+}
