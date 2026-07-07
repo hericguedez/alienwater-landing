@@ -17,9 +17,9 @@ export default function Benefits() {
     },
     {
       icon: Landmark,
-      title: 'Rentabilidad 24/7',
-      text: 'Convierte tu espacio comercial en un punto de venta autónomo que genera ingresos continuos en divisas sin necesidad de presencia física ni costos de personal constantes.',
-      label: '📈 FLUJO PASIVO ACTIVO',
+      title: 'Sostenibilidad 24/7',
+      text: 'Convierte tu espacio en un punto de hidratación autónomo que capta cuotas de mantenimiento continuas sin necesidad de presencia física ni costos de personal constantes.',
+      label: '📈 FLUJO DE SOSTENIMIENTO',
     },
     {
       icon: Globe,
@@ -44,7 +44,7 @@ export default function Benefits() {
             Beneficios de la Tecnología Alienwater
           </h2>
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-            Nuestros dispensadores inteligentes son verdaderas sucursales automáticas que purifican y venden el agua más pura de Venezuela, con el menor costo de mantenimiento del mercado.
+            Nuestros dispensadores inteligentes son verdaderas estaciones exclusivas para socios que purifican y distribuyen hidratación bajo autogestión, con el menor costo de mantenimiento del mercado.
           </p>
         </div>
 

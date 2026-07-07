@@ -39,7 +39,7 @@ export default function Hero({ onQuoteClick }: { onQuoteClick: () => void }) {
 
         {/* Core Main Heading with glorious typography */}
         <h1 className="text-hd text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight max-w-4xl mx-auto drop-shadow-[0_2px_10px_rgba(6,182,212,0.15)]">
-          Alienwater: Revolucionando la Distribución de Agua en Venezuela
+          Alienwater: La Primera Red de Clubes Privados de Hidratación Inteligente
         </h1>
 
         {/* Sub-headline slogan */}
@@ -57,7 +57,7 @@ export default function Hero({ onQuoteClick }: { onQuoteClick: () => void }) {
             <div className="w-6 h-6 bg-slate-950 rounded-full flex items-center justify-center text-cyan-400 shrink-0">
               <Droplet className="w-4 h-4 fill-cyan-400 stroke-none group-hover:animate-bounce" />
             </div>
-            <span>Cotiza tu Máquina Automática Hoy</span>
+            <span>Crea tu Estación de Club Privado Hoy</span>
             <ArrowRight className="w-4 h-4 text-slate-950 stroke-[3px]" />
           </button>
         </div>
@@ -66,7 +66,7 @@ export default function Hero({ onQuoteClick }: { onQuoteClick: () => void }) {
         <div className="flex flex-wrap gap-x-6 gap-y-2 items-center justify-center text-xs text-slate-500 font-mono pt-4">
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />
-            Control de Caja en Dólares (USD / Pago Móvil)
+            Gestión Automatizada de Aportes (USD/Bs)
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full" />

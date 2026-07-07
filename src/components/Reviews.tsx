@@ -6,8 +6,8 @@ export default function Reviews() {
       name: 'Carlos G.',
       location: 'CC El Recreo, Caracas',
       stars: 5,
-      comment: 'La mejor inversión para mi local comercial. El equipo trabaja de manera 100% autónoma las 24 horas del día. El sistema de Pago Móvil automatizado y la telemetría IoT me permiten monitorear mis ingresos desde mi casa en tiempo real.',
-      role: 'Franquiciado Alienwater',
+      comment: 'La mejor infraestructura para nuestra comunidad privada. El equipo trabaja de manera 100% autónoma las 24 horas del día. El sistema de Pago Móvil automatizado y la telemetría IoT nos permiten gestionar las cuotas de sostenimiento en tiempo real.',
+      role: 'Miembro Administrador',
     },
     {
       name: 'María L.',
@@ -20,8 +20,8 @@ export default function Reviews() {
       name: 'José V.',
       location: 'Bella Vista, Maracaibo',
       stars: 5,
-      comment: 'El soporte técnico directo nacional es la clave. Tuvimos una duda sobre la presión del agua, y su equipo de ingenieros locales asistió en apenas un par de horas. El soporte de repuestos nos da total tranquilidad para crecer.',
-      role: 'Inversionista Comercial',
+      comment: 'El soporte técnico directo nacional es la clave. Tuvimos una duda sobre la presión del agua, y su equipo de ingenieros locales asistió en apenas un par de horas. El soporte de repuestos nos da total tranquilidad para el club.',
+      role: 'Presidente de Capítulo',
     },
   ];
 
@@ -37,7 +37,7 @@ export default function Reviews() {
             Opiniones de Nuestros Socios Comerciales
           </h2>
           <p className="text-slate-400 text-sm leading-relaxed max-w-xl mx-auto">
-            Emprendedores e inversionistas venezolanos que ya automatizaron sus ventas de agua purificada con nuestra tecnología.
+            Comunidades y administradores que ya automatizaron su recaudación de cuotas de hidratación purificada con nuestra tecnología.
           </p>
         </div>
 

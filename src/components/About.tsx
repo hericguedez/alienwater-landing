@@ -21,11 +21,11 @@ export default function About() {
             </div>
 
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed font-light">
-              Somos la <strong className="text-white font-bold">única empresa fabricante en Venezuela</strong> especializada en tecnología de dispensado e hidratación automatizada. Nuestro propósito es transformar la manera en que se comercializa el agua potable en el país, ofreciendo soluciones de ingeniería de primer nivel que operan de forma 100% autónoma.
+              Somos la <strong className="text-white font-bold">única empresa fabricante en Venezuela</strong> especializada en tecnología de dispensado e hidratación automatizada. Nuestro propósito es transformar la manera en que se gestiona la hidratación de comunidades mediante autogestión, ofreciendo soluciones de ingeniería de primer nivel que operan de forma 100% autónoma.
             </p>
 
             <p className="text-slate-400 text-sm leading-relaxed">
-              Olvídate de los sistemas tradicionales, envases retornables pesados y logística de personal costosa. Nosotros creamos <em className="text-slate-200 not-italic font-semibold">máquinas inteligentes de purificación y expendio</em> diseñadas para trabajar solas las 24 horas del día.
+              Olvídate de los sistemas tradicionales, envases retornables pesados y logística de personal costosa. Nosotros creamos <em className="text-slate-200 not-italic font-semibold">estaciones de acceso controlado y uso exclusivo para miembros</em> diseñadas para trabajar solas las 24 horas del día.
             </p>
 
             {/* Grid checklist highlights */}
@@ -65,8 +65,8 @@ export default function About() {
                   <HeartHandshake className="w-4.5 h-4.5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Alta Rentabilidad</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5">Retorno de inversión promedio menor a 12 meses por rentabilidad neta.</p>
+                  <h4 className="text-xs font-bold text-slate-200 uppercase tracking-wider">Sostenibilidad Financiera</h4>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Retorno de infraestructura menor a 12 meses por excedentes de sostenibilidad.</p>
                 </div>
               </div>
             </div>

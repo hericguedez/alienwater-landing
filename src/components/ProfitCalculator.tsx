@@ -52,10 +52,10 @@ export default function ProfitCalculator() {
               <Calculator className="w-4 h-4 text-cyan-400" /> Modelador Financiero
             </span>
             <h3 className="text-hd text-2xl lg:text-3xl font-extrabold text-white tracking-tight">
-              Calcula Tu Rentabilidad
+              Modelador de Recaudación del Club
             </h3>
             <p className="text-slate-400 text-sm mt-1 leading-relaxed">
-              Descubre cuán rápido recuperas tu inversión instalando dispensadores inteligentes Alienwater. Los números demuestran la fuerza de la automatización comercial.
+              Descubre cuán rápido recuperas tu infraestructura instalando estaciones para socios Alienwater. Los números demuestran la sostenibilidad de este modelo.
             </p>
           </div>
 
@@ -117,9 +117,9 @@ export default function ProfitCalculator() {
             {/* Input 2: Bottles Sold daily */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs lg:text-sm">
-                <label className="text-slate-300 font-bold">Botellones Vendidos / Día (por máquina)</label>
+                <label className="text-slate-300 font-bold">Aportes (Refills) Diarios por Estación</label>
                 <span className="text-cyan-400 font-mono font-bold text-base bg-cyan-950/40 border border-cyan-900/55 px-2.5 py-0.5 rounded-lg">
-                  {bottlesPerDay} Botellones
+                  {bottlesPerDay} Refills
                 </span>
               </div>
               <input
@@ -132,15 +132,15 @@ export default function ProfitCalculator() {
                 className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-400"
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-mono">
-                <span>5 Botellones</span>
-                <span>100 Botellones</span>
+                <span>5 Refills</span>
+                <span>100 Refills</span>
               </div>
             </div>
 
             {/* Input 3: Price per bottle */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs lg:text-sm">
-                <label className="text-slate-300 font-bold">Precio de Venta por Botellón ($ USD)</label>
+                <label className="text-slate-300 font-bold">Cuota de Mantenimiento por Refill ($ USD)</label>
                 <span className="text-emerald-400 font-mono font-bold text-base bg-emerald-950/20 border border-emerald-900/40 px-2.5 py-0.5 rounded-lg">
                   ${pricePerBottle.toFixed(2)} USD
                 </span>
@@ -163,7 +163,7 @@ export default function ProfitCalculator() {
             {/* Input 4: Water Cost per Bottle */}
             <div className="space-y-2">
               <div className="flex justify-between items-center text-xs lg:text-sm">
-                <label className="text-slate-300 font-bold">Costo de Agua de Entrada (por botellón)</label>
+                <label className="text-slate-300 font-bold">Costo de Agua de Entrada (por refill)</label>
                 <span className="text-amber-400 font-mono font-bold text-base bg-amber-950/20 border border-amber-900/30 px-2.5 py-0.5 rounded-lg">
                   ${waterCostPerBottle.toFixed(2)} USD
                 </span>
@@ -225,7 +225,7 @@ export default function ProfitCalculator() {
 
             {/* Metric Display 2 */}
             <div className="flex justify-between items-center bg-slate-900/40 p-3.5 rounded-xl border border-slate-850">
-              <span className="text-xs text-slate-400">Ingreso Mensual Bruto:</span>
+              <span className="text-xs text-slate-400">Recaudación Mensual Bruta:</span>
               <span className="text-lg font-mono font-bold text-cyan-400">
                 ${monthlyGrossRevenue.toLocaleString()} USD
               </span>
@@ -242,7 +242,7 @@ export default function ProfitCalculator() {
             {/* Metric Display 4 - Ganancia Neta */}
             <div className="bg-linear-to-r from-cyan-950/40 to-blue-950/40 p-4 rounded-xl border border-cyan-800/50 flex justify-between items-center">
               <div>
-                <span className="text-xs text-cyan-300 font-bold block">Ganancia Neta Mensual:</span>
+                <span className="text-xs text-cyan-300 font-bold block">Excedente de Sostenibilidad:</span>
                 <span className="text-xs text-slate-400 font-mono mt-0.5 block">Pasivo Automatizado</span>
               </div>
               <span className="text-2xl font-black font-mono text-emerald-400">
@@ -355,15 +355,15 @@ export default function ProfitCalculator() {
 
                 <div className="grid grid-cols-2 gap-4 mt-4">
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left">
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold font-mono">PROYECCIÓN DE INGRESOS MENSUAL</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold font-mono">PROYECCIÓN DE RECAUDACIÓN MENSUAL</span>
                     <span className="text-xl font-bold font-mono text-emerald-600 mt-1 block">+ ${monthlyNetProfit.toLocaleString()} USD/Mes</span>
                     <span className="text-[10px] text-slate-450 block mt-1 font-sans">Retorno neto estimado después de descontar ${monthlyOpEx} USD de costos fijos mensuales (agua, filtros pulidores, plataforma y otros).</span>
                   </div>
 
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-left">
-                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold font-mono">RETORNO ESTIMADO (ROI)</span>
+                    <span className="text-[10px] text-slate-500 uppercase tracking-wider block font-bold font-mono">RECUPERACIÓN ESTIMADA</span>
                     <span className="text-xl font-bold font-mono text-blue-600 mt-1 block">{roiMonths} Meses de Plazo</span>
-                    <span className="text-[10px] text-slate-450 block mt-1 font-sans">Estimando ventas diarias promedio de {bottlesPerDay} botellones por máquina con precio de refill a ${pricePerBottle.toFixed(2)}.</span>
+                    <span className="text-[10px] text-slate-450 block mt-1 font-sans">Estimando {bottlesPerDay} aportes diarios promedio por máquina con cuota de refill a ${pricePerBottle.toFixed(2)}.</span>
                   </div>
                 </div>
 
